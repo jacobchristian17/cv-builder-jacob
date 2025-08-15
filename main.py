@@ -46,10 +46,11 @@ def print_score_report(score_result):
     print(f"  • Keywords:     {score_result.keyword_score:>6.1f}/100 (25% weight)")
     print(f"  • Hard Skills:  {score_result.hard_skills_score:>6.1f}/100 (20% weight)")
     print(f"  • Soft Skills:  {score_result.soft_skills_score:>6.1f}/100 (15% weight)")
+    print(f"  • Job Title:    {score_result.job_title_score:>6.1f}/100 (10% weight)")
     print(f"  • Skills:       {score_result.skills_score:>6.1f}/100 (combined)")
     print(f"  • Experience:   {score_result.experience_score:>6.1f}/100 (20% weight)")
-    print(f"  • Education:    {score_result.education_score:>6.1f}/100 (10% weight)")
-    print(f"  • Formatting:   {score_result.formatting_score:>6.1f}/100 (10% weight)")
+    print(f"  • Education:    {score_result.education_score:>6.1f}/100 (5% weight)")
+    print(f"  • Formatting:   {score_result.formatting_score:>6.1f}/100 (5% weight)")
     
     # Strengths
     if score_result.detailed_feedback['strengths']:
@@ -155,6 +156,7 @@ def analyze_resume(
                     'skills': score_result.skills_score,
                     'hard_skills': score_result.hard_skills_score,
                     'soft_skills': score_result.soft_skills_score,
+                    'job_title': score_result.job_title_score,
                     'experience': score_result.experience_score,
                     'education': score_result.education_score,
                     'formatting': score_result.formatting_score

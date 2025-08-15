@@ -1,9 +1,14 @@
-### ROLE
--  
-
 ### TASK
-- Create an Application Tracking System-like parser that parses the job description into categories to be used for scoring later
+- Create an ATS-friendly CV template in html format that can import and use JSON data
 
-### FEATURES
-- Job Title Match
--
+### INPUT
+- Import ./data/personal_info.json
+
+### CONSTRAINTS
+- Styling uses Tailwind CSS, use cdn to import the style
+- Object keys should be used as id and/or class names in HTML elements
+
+### OUTPUT
+- .html format
+
+

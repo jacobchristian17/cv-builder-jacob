@@ -18,6 +18,7 @@ class ATSScore:
     skills_score: float  # Combined skills score for backward compatibility
     hard_skills_score: float
     soft_skills_score: float
+    job_title_score: float
     experience_score: float
     education_score: float
     formatting_score: float
@@ -51,6 +52,7 @@ class ATSScorer:
         keyword_score = self._calculate_keyword_score(resume_data, job_data)
         hard_skills_score = self._calculate_hard_skills_score(resume_data, job_data)
         soft_skills_score = self._calculate_soft_skills_score(resume_data, job_data)
+        job_title_score = self._calculate_job_title_score(resume_data, job_data)
         # Combined skills score for backward compatibility
         skills_score = (hard_skills_score * 0.7) + (soft_skills_score * 0.3)
         experience_score = self._calculate_experience_score(resume_data, job_data)
@@ -62,15 +64,17 @@ class ATSScorer:
             'keywords': 0.25,
             'hard_skills': 0.20,
             'soft_skills': 0.15,
+            'job_title': 0.10,
             'experience': 0.20,
-            'education': 0.10,
-            'formatting': 0.10
+            'education': 0.05,
+            'formatting': 0.05
         }
         
         overall_score = (
             keyword_score * weights['keywords'] +
             hard_skills_score * weights['hard_skills'] +
             soft_skills_score * weights['soft_skills'] +
+            job_title_score * weights['job_title'] +
             experience_score * weights['experience'] +
             education_score * weights['education'] +
             formatting_score * weights['formatting']
@@ -80,7 +84,7 @@ class ATSScorer:
         detailed_feedback = self._generate_detailed_feedback(
             resume_data, job_data,
             keyword_score, skills_score, hard_skills_score, soft_skills_score,
-            experience_score, education_score, formatting_score
+            job_title_score, experience_score, education_score, formatting_score
         )
         
         # Generate recommendations
@@ -94,6 +98,7 @@ class ATSScorer:
             skills_score=round(skills_score, 2),
             hard_skills_score=round(hard_skills_score, 2),
             soft_skills_score=round(soft_skills_score, 2),
+            job_title_score=round(job_title_score, 2),
             experience_score=round(experience_score, 2),
             education_score=round(education_score, 2),
             formatting_score=round(formatting_score, 2),
@@ -207,6 +212,77 @@ class ATSScorer:
         
         return min(score, 100.0)
     
+    def _calculate_job_title_score(self, resume_data: Dict, job_data: Dict) -> float:
+        """Calculate job title matching score."""
+        resume_text = resume_data.get('raw_text', '').lower()
+        job_title = job_data.get('job_title', '').lower()
+        
+        if not job_title or job_title == 'unknown position':
+            return 75.0  # Default score if no job title found
+        
+        # Extract potential job titles from resume (simplified approach)
+        resume_titles = self._extract_resume_titles(resume_text)
+        
+        # Calculate similarity between job title and resume titles
+        max_score = 0.0
+        
+        # Direct keyword matching
+        job_title_words = set(job_title.split())
+        
+        for resume_title in resume_titles:
+            resume_title_words = set(resume_title.lower().split())
+            
+            # Calculate overlap score
+            if job_title_words and resume_title_words:
+                overlap = job_title_words.intersection(resume_title_words)
+                score = (len(overlap) / len(job_title_words)) * 100
+                max_score = max(max_score, score)
+        
+        # Also check for job title keywords in general resume text
+        job_title_keywords = self._extract_job_title_keywords(job_title)
+        keyword_matches = 0
+        for keyword in job_title_keywords:
+            if keyword in resume_text:
+                keyword_matches += 1
+        
+        if job_title_keywords:
+            keyword_score = (keyword_matches / len(job_title_keywords)) * 100
+            max_score = max(max_score, keyword_score)
+        
+        return min(max_score, 100.0)
+    
+    def _extract_resume_titles(self, resume_text: str) -> List[str]:
+        """Extract potential job titles from resume text."""
+        titles = []
+        lines = resume_text.split('\n')
+        
+        # Look for common title indicators
+        title_indicators = [
+            'software engineer', 'developer', 'programmer', 'analyst', 'manager',
+            'director', 'lead', 'senior', 'junior', 'principal', 'architect',
+            'consultant', 'specialist', 'coordinator', 'supervisor', 'designer',
+            'data scientist', 'product manager', 'project manager', 'engineer'
+        ]
+        
+        for line in lines[:10]:  # Check first 10 lines where titles are likely
+            line_lower = line.strip().lower()
+            for indicator in title_indicators:
+                if indicator in line_lower:
+                    titles.append(line.strip())
+                    break
+        
+        return titles
+    
+    def _extract_job_title_keywords(self, job_title: str) -> List[str]:
+        """Extract important keywords from job title."""
+        # Remove common words that don't add value to matching
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        
+        words = job_title.lower().split()
+        keywords = [word for word in words if word not in stop_words and len(word) > 2]
+        
+        return keywords
+    
     def _calculate_experience_score(self, resume_data: Dict, job_data: Dict) -> float:
         """Calculate experience matching score."""
         job_exp = job_data.get('experience_required', {})
@@ -318,7 +394,7 @@ class ATSScorer:
     def _generate_detailed_feedback(
         self, resume_data: Dict, job_data: Dict,
         keyword_score: float, skills_score: float, hard_skills_score: float, soft_skills_score: float,
-        experience_score: float, education_score: float,
+        job_title_score: float, experience_score: float, education_score: float,
         formatting_score: float
     ) -> Dict[str, Any]:
         """Generate detailed feedback about the scoring."""
@@ -332,9 +408,10 @@ class ATSScorer:
                 'skills': {'score': skills_score, 'weight': 'Combined'},
                 'hard_skills': {'score': hard_skills_score, 'weight': '20%'},
                 'soft_skills': {'score': soft_skills_score, 'weight': '15%'},
+                'job_title': {'score': job_title_score, 'weight': '10%'},
                 'experience': {'score': experience_score, 'weight': '20%'},
-                'education': {'score': education_score, 'weight': '10%'},
-                'formatting': {'score': formatting_score, 'weight': '10%'}
+                'education': {'score': education_score, 'weight': '5%'},
+                'formatting': {'score': formatting_score, 'weight': '5%'}
             }
         }
         
@@ -345,6 +422,8 @@ class ATSScorer:
             feedback['strengths'].append("Strong technical/hard skills alignment")
         if soft_skills_score >= 80:
             feedback['strengths'].append("Excellent soft skills match")
+        if job_title_score >= 80:
+            feedback['strengths'].append("Strong job title alignment")
         if skills_score >= 80:
             feedback['strengths'].append("Strong overall skills alignment")
         if formatting_score >= 90:
@@ -357,6 +436,8 @@ class ATSScorer:
             feedback['weaknesses'].append("Technical/hard skills section needs improvement")
         if soft_skills_score < 60:
             feedback['weaknesses'].append("Soft skills section could be stronger")
+        if job_title_score < 60:
+            feedback['weaknesses'].append("Job title alignment could be improved")
         if experience_score < 60:
             feedback['weaknesses'].append("Experience section could be stronger")
         
