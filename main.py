@@ -43,11 +43,13 @@ def print_score_report(score_result):
     
     # Score breakdown
     print("\n📊 Score Breakdown:")
-    print(f"  • Keywords:    {score_result.keyword_score:>6.1f}/100 (30% weight)")
-    print(f"  • Skills:      {score_result.skills_score:>6.1f}/100 (25% weight)")
-    print(f"  • Experience:  {score_result.experience_score:>6.1f}/100 (20% weight)")
-    print(f"  • Education:   {score_result.education_score:>6.1f}/100 (15% weight)")
-    print(f"  • Formatting:  {score_result.formatting_score:>6.1f}/100 (10% weight)")
+    print(f"  • Keywords:     {score_result.keyword_score:>6.1f}/100 (25% weight)")
+    print(f"  • Hard Skills:  {score_result.hard_skills_score:>6.1f}/100 (20% weight)")
+    print(f"  • Soft Skills:  {score_result.soft_skills_score:>6.1f}/100 (15% weight)")
+    print(f"  • Skills:       {score_result.skills_score:>6.1f}/100 (combined)")
+    print(f"  • Experience:   {score_result.experience_score:>6.1f}/100 (20% weight)")
+    print(f"  • Education:    {score_result.education_score:>6.1f}/100 (10% weight)")
+    print(f"  • Formatting:   {score_result.formatting_score:>6.1f}/100 (10% weight)")
     
     # Strengths
     if score_result.detailed_feedback['strengths']:
@@ -68,9 +70,23 @@ def print_score_report(score_result):
         for keyword in missing_keywords[:5]:  # Show top 5
             print(f"  • {keyword}")
     
-    # Missing skills
+    # Missing hard skills
+    missing_hard_skills = score_result.detailed_feedback.get('missing_hard_skills', [])
+    if missing_hard_skills:
+        print("\n🔧 Missing Hard Skills:")
+        for skill in missing_hard_skills[:5]:  # Show top 5
+            print(f"  • {skill}")
+    
+    # Missing soft skills
+    missing_soft_skills = score_result.detailed_feedback.get('missing_soft_skills', [])
+    if missing_soft_skills:
+        print("\n💼 Missing Soft Skills:")
+        for skill in missing_soft_skills[:3]:  # Show top 3
+            print(f"  • {skill}")
+    
+    # Missing skills (combined - for backward compatibility)
     missing_skills = score_result.detailed_feedback.get('missing_skills', [])
-    if missing_skills:
+    if missing_skills and not missing_hard_skills and not missing_soft_skills:
         print("\n💡 Missing Required Skills:")
         for skill in missing_skills[:5]:  # Show top 5
             print(f"  • {skill}")
@@ -137,6 +153,8 @@ def analyze_resume(
                 'scores': {
                     'keywords': score_result.keyword_score,
                     'skills': score_result.skills_score,
+                    'hard_skills': score_result.hard_skills_score,
+                    'soft_skills': score_result.soft_skills_score,
                     'experience': score_result.experience_score,
                     'education': score_result.education_score,
                     'formatting': score_result.formatting_score

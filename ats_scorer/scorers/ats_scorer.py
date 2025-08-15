@@ -15,7 +15,9 @@ class ATSScore:
     """Data class for ATS scoring results."""
     overall_score: float
     keyword_score: float
-    skills_score: float
+    skills_score: float  # Combined skills score for backward compatibility
+    hard_skills_score: float
+    soft_skills_score: float
     experience_score: float
     education_score: float
     formatting_score: float
@@ -47,23 +49,28 @@ class ATSScorer:
         
         # Calculate individual component scores
         keyword_score = self._calculate_keyword_score(resume_data, job_data)
-        skills_score = self._calculate_skills_score(resume_data, job_data)
+        hard_skills_score = self._calculate_hard_skills_score(resume_data, job_data)
+        soft_skills_score = self._calculate_soft_skills_score(resume_data, job_data)
+        # Combined skills score for backward compatibility
+        skills_score = (hard_skills_score * 0.7) + (soft_skills_score * 0.3)
         experience_score = self._calculate_experience_score(resume_data, job_data)
         education_score = self._calculate_education_score(resume_data, job_data)
         formatting_score = self._calculate_formatting_score(resume_data)
         
-        # Calculate weighted overall score
+        # Calculate weighted overall score with updated weights
         weights = {
-            'keywords': 0.30,
-            'skills': 0.25,
+            'keywords': 0.25,
+            'hard_skills': 0.20,
+            'soft_skills': 0.15,
             'experience': 0.20,
-            'education': 0.15,
+            'education': 0.10,
             'formatting': 0.10
         }
         
         overall_score = (
             keyword_score * weights['keywords'] +
-            skills_score * weights['skills'] +
+            hard_skills_score * weights['hard_skills'] +
+            soft_skills_score * weights['soft_skills'] +
             experience_score * weights['experience'] +
             education_score * weights['education'] +
             formatting_score * weights['formatting']
@@ -72,8 +79,8 @@ class ATSScorer:
         # Generate detailed feedback
         detailed_feedback = self._generate_detailed_feedback(
             resume_data, job_data,
-            keyword_score, skills_score, experience_score,
-            education_score, formatting_score
+            keyword_score, skills_score, hard_skills_score, soft_skills_score,
+            experience_score, education_score, formatting_score
         )
         
         # Generate recommendations
@@ -85,6 +92,8 @@ class ATSScorer:
             overall_score=round(overall_score, 2),
             keyword_score=round(keyword_score, 2),
             skills_score=round(skills_score, 2),
+            hard_skills_score=round(hard_skills_score, 2),
+            soft_skills_score=round(soft_skills_score, 2),
             experience_score=round(experience_score, 2),
             education_score=round(education_score, 2),
             formatting_score=round(formatting_score, 2),
@@ -141,6 +150,60 @@ class ATSScorer:
         
         # Weighted combination (required skills are more important)
         score = (required_score * 0.7) + (preferred_score * 0.3)
+        
+        return min(score, 100.0)
+    
+    def _calculate_hard_skills_score(self, resume_data: Dict, job_data: Dict) -> float:
+        """Calculate hard skills matching score."""
+        resume_hard_skills = set([s.lower() for s in resume_data.get('hard_skills', [])])
+        required_hard_skills = set([s.lower() for s in job_data.get('required_hard_skills', [])])
+        preferred_hard_skills = set([s.lower() for s in job_data.get('preferred_hard_skills', [])])
+        all_job_hard_skills = set([s.lower() for s in job_data.get('all_hard_skills', [])])
+        
+        # Use all job hard skills if specific required/preferred not available
+        if not required_hard_skills and not preferred_hard_skills and all_job_hard_skills:
+            required_hard_skills = all_job_hard_skills
+        
+        if not required_hard_skills and not preferred_hard_skills:
+            return 75.0  # Default score if no hard skills specified
+        
+        # Match required hard skills (weighted more heavily)
+        required_matches = resume_hard_skills.intersection(required_hard_skills)
+        required_score = (len(required_matches) / len(required_hard_skills) * 100) if required_hard_skills else 100
+        
+        # Match preferred hard skills
+        preferred_matches = resume_hard_skills.intersection(preferred_hard_skills)
+        preferred_score = (len(preferred_matches) / len(preferred_hard_skills) * 100) if preferred_hard_skills else 100
+        
+        # Weighted combination (required skills are more important)
+        score = (required_score * 0.8) + (preferred_score * 0.2)
+        
+        return min(score, 100.0)
+    
+    def _calculate_soft_skills_score(self, resume_data: Dict, job_data: Dict) -> float:
+        """Calculate soft skills matching score."""
+        resume_soft_skills = set([s.lower() for s in resume_data.get('soft_skills', [])])
+        required_soft_skills = set([s.lower() for s in job_data.get('required_soft_skills', [])])
+        preferred_soft_skills = set([s.lower() for s in job_data.get('preferred_soft_skills', [])])
+        all_job_soft_skills = set([s.lower() for s in job_data.get('all_soft_skills', [])])
+        
+        # Use all job soft skills if specific required/preferred not available
+        if not required_soft_skills and not preferred_soft_skills and all_job_soft_skills:
+            required_soft_skills = all_job_soft_skills
+        
+        if not required_soft_skills and not preferred_soft_skills:
+            return 80.0  # Default score slightly higher for soft skills
+        
+        # Match required soft skills
+        required_matches = resume_soft_skills.intersection(required_soft_skills)
+        required_score = (len(required_matches) / len(required_soft_skills) * 100) if required_soft_skills else 100
+        
+        # Match preferred soft skills
+        preferred_matches = resume_soft_skills.intersection(preferred_soft_skills)
+        preferred_score = (len(preferred_matches) / len(preferred_soft_skills) * 100) if preferred_soft_skills else 100
+        
+        # Weighted combination (soft skills have more flexibility)
+        score = (required_score * 0.6) + (preferred_score * 0.4)
         
         return min(score, 100.0)
     
@@ -254,7 +317,7 @@ class ATSScorer:
     
     def _generate_detailed_feedback(
         self, resume_data: Dict, job_data: Dict,
-        keyword_score: float, skills_score: float,
+        keyword_score: float, skills_score: float, hard_skills_score: float, soft_skills_score: float,
         experience_score: float, education_score: float,
         formatting_score: float
     ) -> Dict[str, Any]:
@@ -265,10 +328,12 @@ class ATSScorer:
             'missing_keywords': [],
             'missing_skills': [],
             'score_breakdown': {
-                'keywords': {'score': keyword_score, 'weight': '30%'},
-                'skills': {'score': skills_score, 'weight': '25%'},
+                'keywords': {'score': keyword_score, 'weight': '25%'},
+                'skills': {'score': skills_score, 'weight': 'Combined'},
+                'hard_skills': {'score': hard_skills_score, 'weight': '20%'},
+                'soft_skills': {'score': soft_skills_score, 'weight': '15%'},
                 'experience': {'score': experience_score, 'weight': '20%'},
-                'education': {'score': education_score, 'weight': '15%'},
+                'education': {'score': education_score, 'weight': '10%'},
                 'formatting': {'score': formatting_score, 'weight': '10%'}
             }
         }
@@ -276,16 +341,22 @@ class ATSScorer:
         # Identify strengths
         if keyword_score >= 80:
             feedback['strengths'].append("Excellent keyword match with job description")
+        if hard_skills_score >= 80:
+            feedback['strengths'].append("Strong technical/hard skills alignment")
+        if soft_skills_score >= 80:
+            feedback['strengths'].append("Excellent soft skills match")
         if skills_score >= 80:
-            feedback['strengths'].append("Strong skills alignment")
+            feedback['strengths'].append("Strong overall skills alignment")
         if formatting_score >= 90:
             feedback['strengths'].append("ATS-friendly formatting")
         
         # Identify weaknesses
         if keyword_score < 60:
             feedback['weaknesses'].append("Low keyword match - consider using more terms from job description")
-        if skills_score < 60:
-            feedback['weaknesses'].append("Skills section needs improvement")
+        if hard_skills_score < 60:
+            feedback['weaknesses'].append("Technical/hard skills section needs improvement")
+        if soft_skills_score < 60:
+            feedback['weaknesses'].append("Soft skills section could be stronger")
         if experience_score < 60:
             feedback['weaknesses'].append("Experience section could be stronger")
         
@@ -300,12 +371,33 @@ class ATSScorer:
                     if keyword and keyword.lower() not in resume_text:
                         feedback['missing_keywords'].append(keyword)
         
-        # Find missing skills
-        resume_skills = set([s.lower() for s in resume_data.get('skills', [])])
-        required_skills = job_data.get('required_skills', [])
+        # Find missing skills - separate hard and soft skills
+        resume_hard_skills = set([s.lower() for s in resume_data.get('hard_skills', [])])
+        resume_soft_skills = set([s.lower() for s in resume_data.get('soft_skills', [])])
         
-        for skill in required_skills:
-            if skill.lower() not in resume_skills:
+        required_hard_skills = job_data.get('required_hard_skills', [])
+        required_soft_skills = job_data.get('required_soft_skills', [])
+        
+        # Add new categories to feedback
+        feedback['missing_hard_skills'] = []
+        feedback['missing_soft_skills'] = []
+        
+        # Find missing hard skills
+        for skill in required_hard_skills:
+            if skill.lower() not in resume_hard_skills:
+                feedback['missing_hard_skills'].append(skill)
+        
+        # Find missing soft skills
+        for skill in required_soft_skills:
+            if skill.lower() not in resume_soft_skills:
+                feedback['missing_soft_skills'].append(skill)
+        
+        # Keep original missing_skills for backward compatibility
+        all_required_skills = job_data.get('required_skills', [])
+        all_resume_skills = set([s.lower() for s in resume_data.get('skills', [])])
+        
+        for skill in all_required_skills:
+            if skill.lower() not in all_resume_skills:
                 feedback['missing_skills'].append(skill)
         
         return feedback

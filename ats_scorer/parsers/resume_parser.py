@@ -8,6 +8,7 @@ import logging
 from .pdf_parser import PDFParser
 from .docx_parser import DOCXParser
 from .text_parser import TextParser
+from ..utils.skill_categorizer import SkillCategorizer
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class ResumeParser:
         self.pdf_parser = PDFParser()
         self.docx_parser = DOCXParser()
         self.text_parser = TextParser()
+        self.skill_categorizer = SkillCategorizer()
         
         self.parsers = {
             '.pdf': self.pdf_parser,
@@ -72,10 +74,23 @@ class ResumeParser:
         Returns:
             Dictionary with extracted information
         """
+        # Extract skills and categorize them
+        all_skills = self._extract_skills(text)
+        categorized_skills = self.skill_categorizer.categorize_skills(all_skills)
+        
+        # Also extract skills directly from text using the categorizer
+        text_skills = self.skill_categorizer.extract_categorized_skills_from_text(text)
+        
+        # Merge the results
+        hard_skills = list(set(categorized_skills['hard_skills'] + text_skills['hard_skills']))
+        soft_skills = list(set(categorized_skills['soft_skills'] + text_skills['soft_skills']))
+        
         return {
             'raw_text': text,
             'contact_info': self._extract_contact_info(text),
-            'skills': self._extract_skills(text),
+            'skills': all_skills,  # Keep original for backward compatibility
+            'hard_skills': hard_skills,
+            'soft_skills': soft_skills,
             'experience': self._extract_experience(text),
             'education': self._extract_education(text),
             'keywords': self._extract_keywords(text),

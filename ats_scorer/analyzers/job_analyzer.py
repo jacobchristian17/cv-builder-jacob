@@ -7,6 +7,7 @@ from collections import Counter
 
 from .keyword_extractor import KeywordExtractor
 from .requirements_parser import RequirementsParser
+from ..utils.skill_categorizer import SkillCategorizer
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class JobAnalyzer:
     def __init__(self):
         self.keyword_extractor = KeywordExtractor()
         self.requirements_parser = RequirementsParser()
+        self.skill_categorizer = SkillCategorizer()
     
     def analyze(self, job_description: str) -> Dict[str, Any]:
         """
@@ -32,10 +34,29 @@ class JobAnalyzer:
         """
         logger.info("Analyzing job description")
         
+        # Extract skills and categorize them
+        required_skills = self._extract_required_skills(job_description)
+        preferred_skills = self._extract_preferred_skills(job_description)
+        
+        # Categorize required skills
+        required_categorized = self.skill_categorizer.categorize_skills(required_skills)
+        
+        # Categorize preferred skills
+        preferred_categorized = self.skill_categorizer.categorize_skills(preferred_skills)
+        
+        # Extract skills directly from text
+        text_skills = self.skill_categorizer.extract_categorized_skills_from_text(job_description)
+        
         analysis = {
             'raw_text': job_description,
-            'required_skills': self._extract_required_skills(job_description),
-            'preferred_skills': self._extract_preferred_skills(job_description),
+            'required_skills': required_skills,  # Keep original for backward compatibility
+            'preferred_skills': preferred_skills,  # Keep original for backward compatibility
+            'required_hard_skills': required_categorized['hard_skills'],
+            'required_soft_skills': required_categorized['soft_skills'],
+            'preferred_hard_skills': preferred_categorized['hard_skills'],
+            'preferred_soft_skills': preferred_categorized['soft_skills'],
+            'all_hard_skills': list(set(required_categorized['hard_skills'] + preferred_categorized['hard_skills'] + text_skills['hard_skills'])),
+            'all_soft_skills': list(set(required_categorized['soft_skills'] + preferred_categorized['soft_skills'] + text_skills['soft_skills'])),
             'experience_required': self._extract_experience_requirements(job_description),
             'education_required': self._extract_education_requirements(job_description),
             'keywords': self.keyword_extractor.extract(job_description),
@@ -49,9 +70,10 @@ class JobAnalyzer:
     
     def _extract_required_skills(self, text: str) -> List[str]:
         """Extract required skills from job description."""
-        required_skills = []
+        # Use the skill categorizer to extract actual technical keywords
+        categorized_skills = self.skill_categorizer.extract_categorized_skills_from_text(text)
         
-        # Look for sections that indicate requirements
+        # Look for sections that indicate requirements and extract keywords from them
         required_patterns = [
             r'required skills?:?(.*?)(?:preferred|desired|nice to have|\n\n)',
             r'must have:?(.*?)(?:preferred|desired|nice to have|\n\n)',
@@ -59,22 +81,25 @@ class JobAnalyzer:
             r'qualifications?:?(.*?)(?:preferred|desired|nice to have|\n\n)',
         ]
         
+        required_section_skills = []
         text_lower = text.lower()
         for pattern in required_patterns:
             matches = re.findall(pattern, text_lower, re.DOTALL | re.IGNORECASE)
             for match in matches:
-                # Extract bullet points or comma-separated items
-                skills = self._extract_skill_items(match)
-                required_skills.extend(skills)
+                # Extract keywords from this section using skill categorizer
+                section_skills = self.skill_categorizer.extract_categorized_skills_from_text(match)
+                required_section_skills.extend(section_skills['hard_skills'])
+                required_section_skills.extend(section_skills['soft_skills'])
         
-        # Also look for technical skills mentioned throughout
-        tech_skills = self._extract_technical_skills(text)
-        required_skills.extend(tech_skills)
+        # Combine all skills found
+        all_skills = (categorized_skills['hard_skills'] + 
+                     categorized_skills['soft_skills'] + 
+                     required_section_skills)
         
         # Remove duplicates while preserving order
         seen = set()
         unique_skills = []
-        for skill in required_skills:
+        for skill in all_skills:
             if skill.lower() not in seen:
                 seen.add(skill.lower())
                 unique_skills.append(skill)
@@ -83,8 +108,6 @@ class JobAnalyzer:
     
     def _extract_preferred_skills(self, text: str) -> List[str]:
         """Extract preferred/nice-to-have skills from job description."""
-        preferred_skills = []
-        
         preferred_patterns = [
             r'preferred skills?:?(.*?)(?:requirements?|qualifications?|\n\n)',
             r'nice to have:?(.*?)(?:requirements?|qualifications?|\n\n)',
@@ -92,15 +115,18 @@ class JobAnalyzer:
             r'bonus:?(.*?)(?:requirements?|qualifications?|\n\n)',
         ]
         
+        preferred_section_skills = []
         text_lower = text.lower()
         for pattern in preferred_patterns:
             matches = re.findall(pattern, text_lower, re.DOTALL | re.IGNORECASE)
             for match in matches:
-                skills = self._extract_skill_items(match)
-                preferred_skills.extend(skills)
+                # Extract keywords from this section using skill categorizer
+                section_skills = self.skill_categorizer.extract_categorized_skills_from_text(match)
+                preferred_section_skills.extend(section_skills['hard_skills'])
+                preferred_section_skills.extend(section_skills['soft_skills'])
         
         # Remove duplicates
-        return list(set(preferred_skills))
+        return list(set(preferred_section_skills))
     
     def _extract_experience_requirements(self, text: str) -> Dict[str, Any]:
         """Extract experience requirements from job description."""

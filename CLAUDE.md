@@ -70,15 +70,22 @@ mypy ats_scorer/
    - `ATSScorer`: Calculates overall ATS compatibility score
    - `KeywordMatcher`: Matches keywords between resume and job description
    - `ScoreCalculator`: Handles weighted scoring and normalization
-   - Scoring weights: Keywords (30%), Skills (25%), Experience (20%), Education (15%), Formatting (10%)
+   - **Updated Scoring weights**: Keywords (25%), Hard Skills (20%), Soft Skills (15%), Experience (20%), Education (10%), Formatting (10%)
+
+4. **Skill Categorization** (`ats_scorer/utils/`)
+   - `SkillCategorizer`: Categorizes skills into hard (technical) and soft (non-technical) skills
+   - **Hard Skills**: Programming languages, frameworks, tools, technologies (e.g., Python, JavaScript, AWS, Docker)
+   - **Soft Skills**: Communication, leadership, teamwork, problem-solving abilities
+   - Comprehensive skill databases with pattern matching
 
 ### Data Flow
 
 1. User provides resume file and job description
-2. `ResumeParser` extracts structured data from resume
-3. `JobAnalyzer` extracts requirements and keywords from job description
-4. `ATSScorer` compares both datasets and calculates scores
-5. System generates detailed feedback and recommendations
+2. `ResumeParser` extracts structured data from resume and categorizes skills
+3. `JobAnalyzer` extracts requirements and keywords from job description and categorizes skills
+4. `SkillCategorizer` processes both resume and job description skills into hard/soft categories
+5. `ATSScorer` compares both datasets and calculates separate scores for hard and soft skills
+6. System generates detailed feedback with skill-specific recommendations
 
 ### Key Design Patterns
 
@@ -91,7 +98,10 @@ mypy ats_scorer/
 
 - PDF parsing may require either PyPDF2 or pdfplumber (fallback supported)
 - DOCX parsing may require either docx2txt or python-docx (fallback supported)
-- Scoring algorithms use weighted calculations with normalization
+- **Skill Categorization**: Uses comprehensive databases and pattern matching for hard/soft skill classification
+- **Scoring algorithms**: Use weighted calculations with separate hard/soft skill scoring
+- **Hard Skills scoring**: Weighted 80% required, 20% preferred (technical skills are critical)
+- **Soft Skills scoring**: Weighted 60% required, 40% preferred (more flexibility)
 - Keywords matching includes both exact and similarity-based matching
 - All scores are normalized to 0-100 range
 
