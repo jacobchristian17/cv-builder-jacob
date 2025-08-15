@@ -25,14 +25,14 @@
         <header class="personal_info border-b-2 border-gray-200 pb-6 mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start">
                 <div class="mb-4 md:mb-0">
-                    <h1 id="full_name" class="name text-4xl font-bold text-gray-800 mb-2"></h1>
-                    <p id="job_title" class="text-xl text-blue-600 font-medium mb-4"></p>
-                    <div id="summary" class="summary text-gray-600 max-w-2xl leading-relaxed"></div>
+                    <h1 id="full_name" class="name text-2xl font-bold text-gray-800 mb-2"></h1>
+                    <p id="job_title" class="text-xl text-sky-600 font-medium mb-2 text-md"></p>
+                    <div id="summary" class="summary text-gray-600 max-w-2xl text-sm leading-snug text-justify"></div>
                 </div>
                 <div class="contact-info text-right">
-                    <div id="mobile" class="mobile text-gray-700 mb-1"></div>
-                    <div id="email" class="email text-blue-600 mb-1"></div>
-                    <div id="website" class="website text-blue-600 mb-1"></div>
+                    <div id="mobile" class="mobile text-gray-700 mb-1/2 text-sm"></div>
+                    <div id="email" class="email text-sky-600 mb-1/2 text-sm"></div>
+                    <div id="website" class="website text-sky-600 mb-1/2 text-sm"></div>
                     <div id="address" class="address text-gray-600 text-sm"></div>
                 </div>
             </div>
@@ -40,7 +40,7 @@
 
         <!-- Work Experience Section -->
         <section class="work_info mb-8">
-            <h2 class="experience-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+            <h2 class="experience-title text-lg font-bold text-gray-800 mb-2 border-b border-gray-300 pb-2">
                 Professional Experience
             </h2>
             <div id="experience-list" class="experience space-y-6"></div>
@@ -48,16 +48,16 @@
 
         <!-- Skills Section -->
         <section class="skills mb-8">
-            <h2 class="skills-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
-                Technical Skills
+            <h2 class="skills-title text-lg font-bold text-gray-800 mb-2 border-b border-gray-300 pb-2">
+                Skills
             </h2>
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Hard Skills</h3>
+                    <h3 class="font-semibold text-gray-500 mb-1">Core/ Technical</h3>
                     <div id="hard_skills" class="hard_skills space-y-4"></div>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Soft Skills</h3>
+                    <h3 class="text-lg font-semibold text-gray-500 mb-1">Soft Skills</h3>
                     <div id="soft_skills" class="soft_skills space-y-4"></div>
                 </div>
             </div>
@@ -65,21 +65,21 @@
 
         <!-- Education Section -->
         <section class="education mb-8">
-            <h2 class="education-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+            <h2 class="education-title text-lg font-bold text-gray-800 mb-2 border-b border-gray-300 pb-2">
                 Education
             </h2>
             <div id="education-content" class="education-content">
                 <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 id="degree" class="degree text-lg font-semibold text-gray-800"></h3>
-                    <p id="school_location" class="school_location text-gray-600"></p>
-                    <p id="period" class="period text-gray-500 text-sm"></p>
+                    <h3 id="degree" class="degree text-sm font-semibold text-sky-800"></h3>
+                    <p id="school_location" class="school_location text-sm text-gray-600"></p>
+                    <p id="period" class="period text-gray-500 text-xs"></p>
                 </div>
             </div>
         </section>
 
         <!-- Certifications Section -->
         <section class="certifications mb-8">
-            <h2 class="certifications-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+            <h2 class="certifications-title text-lg font-bold text-gray-800 mb-2 border-b border-gray-300 pb-2">
                 Certifications
             </h2>
             <div id="certifications-list" class="certifications space-y-4"></div>
@@ -87,7 +87,7 @@
 
         <!-- Interests Section -->
         <section class="other mb-8">
-            <h2 class="interests-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+            <h2 class="interests-title text-lg font-bold text-gray-800 mb-2 border-b border-gray-300 pb-2">
                 Interests & Hobbies
             </h2>
             <div id="interest_and_hobbies" class="interest_and_hobbies space-y-4"></div>
@@ -128,6 +128,7 @@
             // Personal Info
             const personalInfo = data.personal_info;
             document.getElementById('full_name').textContent = personalInfo.name;
+            document.getElementById('job_title').textContent = personalInfo.job_title;
             document.getElementById('mobile').textContent = personalInfo.mobile;
             document.getElementById('email').textContent = personalInfo.email;
             
@@ -150,37 +151,37 @@
             const experienceList = document.getElementById('experience-list');
             workInfo.experience.forEach((job, index) => {
                 const jobEl = document.createElement('div');
-                jobEl.className = `experience-item-${index} bg-gray-50 p-4 rounded-lg`;
+                jobEl.className = `experience-item-${index} bg-gray-50 p-3 rounded-lg`;
                 jobEl.innerHTML = `
                     <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-2">
                         <div>
-                            <h3 class="role text-lg font-semibold text-gray-800">${job.role}</h3>
-                            <p class="company text-blue-600 font-medium">${job.company}</p>
+                            <h3 class="role text-base font-semibold text-sky-600">${job.role}</h3>
+                            <p class="company text-gray-800  font-medium text-sm">${job.company}</p>
                             <p class="location text-gray-600 text-sm">${job.location}</p>
                         </div>
-                        <div class="period text-gray-500 text-sm md:text-right mt-2 md:mt-0">
+                        <div class="period text-gray-500 text-sm">
                             ${job.period}
                         </div>
                     </div>
                     <ul class="features mt-3 space-y-1">
                         ${job.features.map(feature => `
-                            <li class="text-gray-700 text-sm">• ${feature}</li>
+                            <li class="text-gray-700 text-xs"> <span class="text-sky-600">•</span> ${feature}</li>
                         `).join('')}
                     </ul>
                 `;
                 experienceList.appendChild(jobEl);
             });
 
-            // Hard Skills
+            // Core/ Technical
             const hardSkillsEl = document.getElementById('hard_skills');
             workInfo.skills.hard_skills.forEach((skillCategory, index) => {
                 const categoryEl = document.createElement('div');
-                categoryEl.className = `skill-category skill-category-${index} mb-4`;
+                categoryEl.className = `skill-category skill-category-${index}`;
                 categoryEl.innerHTML = `
-                    <h4 class="category font-medium text-gray-800 mb-2">${skillCategory.category}</h4>
-                    <div class="skill_list flex flex-wrap gap-2">
+                    <h4 class="category text-sm font-medium text-gray-700 mb-1">${skillCategory.category}</h4>
+                    <div class="skill_list flex flex-wrap gap-1">
                         ${skillCategory.skill_list.map(skill => `
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${skill.trim()}</span>
+                            <span class="bg-sky-100 text-sky-800 px-2 pb-1 rounded text-xs">${skill.trim()}</span>
                         `).join('')}
                     </div>
                 `;
@@ -191,12 +192,12 @@
             const softSkillsEl = document.getElementById('soft_skills');
             workInfo.skills.soft_skills.forEach((skillCategory, index) => {
                 const categoryEl = document.createElement('div');
-                categoryEl.className = `skill-category soft-skill-category-${index} mb-4`;
+                categoryEl.className = `skill-category soft-skill-category-${index}`;
                 categoryEl.innerHTML = `
-                    <h4 class="category font-medium text-gray-800 mb-2">${skillCategory.category}</h4>
-                    <div class="skill_list flex flex-wrap gap-2">
+                    <h4 class="category text-sm font-medium text-gray-800 mb-1">${skillCategory.category}</h4>
+                    <div class="skill_list flex flex-wrap gap-1">
                         ${skillCategory.skill_list.map(skill => `
-                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">${skill.trim()}</span>
+                            <span class="bg-sky-50 text-sky-800 px-2 py-1 rounded text-xs">${skill.trim()}</span>
                         `).join('')}
                     </div>
                 `;
@@ -215,11 +216,11 @@
                 const certEl = document.createElement('div');
                 certEl.className = `certification-item-${index} bg-gray-50 p-3 rounded-lg`;
                 certEl.innerHTML = `
-                    <h4 class="certification_name font-semibold text-gray-800">${cert.certification_name}</h4>
-                    <p class="certification_provider text-gray-600">${cert.certification_provider}</p>
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="certification_date text-gray-500 text-sm">${cert.certification_date}</span>
-                        <a href="${cert.certification_link}" target="_blank" class="text-blue-600 text-sm hover:underline">View Certificate</a>
+                    <h4 class="certification_name text-sm font-semibold text-sky-800">${cert.certification_name}</h4>
+                    <p class="certification_provider text-gray-600 text-sm italic">${cert.certification_provider}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="certification_date text-gray-500 text-xs">${cert.certification_date}</span>
+                        <a href="${cert.certification_link}" target="_blank" class="text-sky-600 text-xs hover:underline">View Certificate</a>
                     </div>
                 `;
                 certificationsEl.appendChild(certEl);
@@ -231,8 +232,8 @@
                 const interestEl = document.createElement('div');
                 interestEl.className = `interest-item-${index} mb-4`;
                 interestEl.innerHTML = `
-                    <h4 class="title font-semibold text-gray-800 mb-2">${interest.title}</h4>
-                    <p class="content text-gray-600 text-sm leading-relaxed">${interest.content}</p>
+                    <h4 class="title text-sm font-semibold text-gray-800 mb-2">${interest.title}</h4>
+                    <p class="content text-gray-600 text-xs leading-relaxed text-justify">${interest.content}</p>
                 `;
                 interestsEl.appendChild(interestEl);
             });
