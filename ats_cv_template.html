@@ -8,8 +8,126 @@
     <style>
         @media print {
             .no-print { display: none !important; }
-            body { -webkit-print-color-adjust: exact; }
+            
+            /* Print page setup */
+            @page {
+                size: A4;
+                margin: 0.5in;
+            }
+            
+            body { 
+                -webkit-print-color-adjust: exact; 
+                color-adjust: exact;
+                font-size: 11pt !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* Container adjustments */
+            #cv-container {
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+            
+            /* Fix flexbox layouts for print */
+            .personal_info .flex {
+                display: table !important;
+                width: 100% !important;
+            }
+            
+            .personal_info .flex > div:first-child {
+                display: table-cell !important;
+                width: 65% !important;
+                vertical-align: top !important;
+                padding-right: 20pt !important;
+            }
+            
+            .personal_info .flex > div:last-child {
+                display: table-cell !important;
+                width: 35% !important;
+                text-align: right !important;
+                vertical-align: top !important;
+            }
+            
+            /* Experience item layouts */
+            .experience-item .flex {
+                display: block !important;
+            }
+            
+            .experience-item .flex > div:first-child {
+                margin-bottom: 4pt !important;
+            }
+            
+            .experience-item .period {
+                text-align: right !important;
+                font-style: italic !important;
+                margin-top: -12pt !important;
+                margin-bottom: 4pt !important;
+            }
+            
+            /* Skills grid fix */
+            .skills .grid {
+                display: table !important;
+                width: 100% !important;
+            }
+            
+            .skills .grid > div {
+                display: table-cell !important;
+                width: 50% !important;
+                vertical-align: top !important;
+                padding-right: 10pt !important;
+            }
+            
+            /* Typography adjustments */
+            h1 { font-size: 16pt !important; margin-bottom: 3pt !important; }
+            h2 { font-size: 13pt !important; margin-bottom: 4pt !important; margin-top: 8pt !important; }
+            h3 { font-size: 11pt !important; margin-bottom: 2pt !important; }
+            h4 { font-size: 10pt !important; margin-bottom: 2pt !important; }
+            
+            .text-xs { font-size: 8pt !important; }
+            .text-sm { font-size: 9pt !important; }
+            .text-base { font-size: 10pt !important; }
+            .text-lg { font-size: 11pt !important; }
+            .text-xl { font-size: 12pt !important; }
+            .text-2xl { font-size: 14pt !important; }
+            
+            /* Spacing adjustments */
+            .mb-8 { margin-bottom: 8pt !important; }
+            .mb-6 { margin-bottom: 6pt !important; }
+            .mb-4 { margin-bottom: 4pt !important; }
+            .mb-2 { margin-bottom: 2pt !important; }
+            .pb-6 { padding-bottom: 6pt !important; }
+            .pb-2 { padding-bottom: 2pt !important; }
+            .p-3 { padding: 4pt !important; }
+            
+            /* Page break controls */
+            .personal_info { page-break-after: avoid; }
+            .work_info { page-break-inside: avoid; }
+            .skills { page-break-inside: avoid; }
+            .education { page-break-inside: avoid; }
+            .certifications { page-break-inside: avoid; }
+            .other { page-break-inside: avoid; }
+            .experience-item { page-break-inside: avoid; margin-bottom: 6pt !important; }
+            
+            /* Skill tags optimization */
+            .skill_list span {
+                display: inline-block !important;
+                margin: 1pt 2pt 1pt 0 !important;
+                padding: 1pt 3pt !important;
+                border: 1pt solid #d1d5db !important;
+                border-radius: 2pt !important;
+                font-size: 7pt !important;
+            }
+            
+            /* Remove shadows and reduce spacing */
+            * {
+                box-shadow: none !important;
+                animation: none !important;
+                transition: none !important;
+            }
         }
+        
         .skill-category { page-break-inside: avoid; }
     </style>
 </head>
@@ -94,10 +212,13 @@
         </section>
     </div>
 
-    <!-- Print Button -->
-    <div class="no-print fixed bottom-4 right-4">
-        <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
-            Print CV
+    <!-- Print Controls -->
+    <div class="no-print fixed bottom-4 right-4 space-y-2">
+        <button onclick="printToPDF()" class="block w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+            📄 Save as PDF
+        </button>
+        <button onclick="window.print()" class="block w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+            🖨️ Print CV
         </button>
     </div>
 
@@ -244,6 +365,28 @@
             // Hide loading and show CV
             document.getElementById('loading').style.display = 'none';
             document.getElementById('cv-container').classList.remove('hidden');
+        }
+
+        // Print to PDF function
+        function printToPDF() {
+            // Get the person's name for the filename
+            const name = document.getElementById('full_name').textContent || 'CV';
+            const filename = name.replace(/\s+/g, '_') + '_CV.pdf';
+            
+            // Set document title for PDF
+            const originalTitle = document.title;
+            document.title = filename.replace('.pdf', '');
+            
+            // Trigger print dialog with instructions
+            alert('In the print dialog:\n1. Select "Save as PDF" as destination\n2. Set filename to: ' + filename + '\n3. Ensure "Background graphics" is enabled');
+            
+            // Open print dialog
+            window.print();
+            
+            // Restore original title
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
         }
 
         // Load CV data when page loads
