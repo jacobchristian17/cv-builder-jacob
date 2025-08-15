@@ -1,7 +1,7 @@
 """Keyword matching utilities for ATS scoring."""
 
 import re
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set, Any
 from difflib import SequenceMatcher
 import logging
 
