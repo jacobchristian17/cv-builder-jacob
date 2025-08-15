@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="document-title">Professional CV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { -webkit-print-color-adjust: exact; }
+        }
+        .skill-category { page-break-inside: avoid; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Loading indicator -->
+    <div id="loading" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- CV Container -->
+    <div id="cv-container" class="max-w-4xl mx-auto bg-white shadow-lg my-8 p-8 hidden">
+        <!-- Header Section -->
+        <header class="personal_info border-b-2 border-gray-200 pb-6 mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start">
+                <div class="mb-4 md:mb-0">
+                    <h1 id="full_name" class="name text-4xl font-bold text-gray-800 mb-2"></h1>
+                    <p id="job_title" class="text-xl text-blue-600 font-medium mb-4"></p>
+                    <div id="summary" class="summary text-gray-600 max-w-2xl leading-relaxed"></div>
+                </div>
+                <div class="contact-info text-right">
+                    <div id="mobile" class="mobile text-gray-700 mb-1"></div>
+                    <div id="email" class="email text-blue-600 mb-1"></div>
+                    <div id="website" class="website text-blue-600 mb-1"></div>
+                    <div id="address" class="address text-gray-600 text-sm"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Work Experience Section -->
+        <section class="work_info mb-8">
+            <h2 class="experience-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+                Professional Experience
+            </h2>
+            <div id="experience-list" class="experience space-y-6"></div>
+        </section>
+
+        <!-- Skills Section -->
+        <section class="skills mb-8">
+            <h2 class="skills-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+                Technical Skills
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Hard Skills</h3>
+                    <div id="hard_skills" class="hard_skills space-y-4"></div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Soft Skills</h3>
+                    <div id="soft_skills" class="soft_skills space-y-4"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Education Section -->
+        <section class="education mb-8">
+            <h2 class="education-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+                Education
+            </h2>
+            <div id="education-content" class="education-content">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 id="degree" class="degree text-lg font-semibold text-gray-800"></h3>
+                    <p id="school_location" class="school_location text-gray-600"></p>
+                    <p id="period" class="period text-gray-500 text-sm"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Certifications Section -->
+        <section class="certifications mb-8">
+            <h2 class="certifications-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+                Certifications
+            </h2>
+            <div id="certifications-list" class="certifications space-y-4"></div>
+        </section>
+
+        <!-- Interests Section -->
+        <section class="other mb-8">
+            <h2 class="interests-title text-2xl font-bold text-gray-800 mb-6 border-b border-gray-300 pb-2">
+                Interests & Hobbies
+            </h2>
+            <div id="interest_and_hobbies" class="interest_and_hobbies space-y-4"></div>
+        </section>
+    </div>
+
+    <!-- Print Button -->
+    <div class="no-print fixed bottom-4 right-4">
+        <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
+            Print CV
+        </button>
+    </div>
+
+    <script>
+        // Function to load and populate CV data
+        async function loadCVData() {
+            try {
+                const response = await fetch('./data/personal_info.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                populateCV(data);
+            } catch (error) {
+                console.error('Error loading CV data:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div class="text-center">
+                        <h2 class="text-2xl font-bold text-red-600 mb-4">Error Loading CV Data</h2>
+                        <p class="text-gray-600">${error.message}</p>
+                        <p class="text-sm text-gray-500 mt-2">Please ensure the data/personal_info.json file is accessible.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Function to populate CV with data
+        function populateCV(data) {
+            // Personal Info
+            const personalInfo = data.personal_info;
+            document.getElementById('full_name').textContent = personalInfo.name;
+            document.getElementById('mobile').textContent = personalInfo.mobile;
+            document.getElementById('email').textContent = personalInfo.email;
+            
+            // Website with link
+            const websiteEl = document.getElementById('website');
+            if (personalInfo.website) {
+                websiteEl.innerHTML = `<a href="${personalInfo.website.url}" target="_blank" class="hover:underline">${personalInfo.website.text}</a>`;
+            }
+
+            // Address
+            const address = personalInfo.address_line;
+            const fullAddress = `${address.street} ${address.barangay}, ${address.city}, ${address.country} ${address.zip}`;
+            document.getElementById('address').textContent = fullAddress;
+
+            // Work Info
+            const workInfo = data.work_info;
+            document.getElementById('summary').textContent = workInfo.summary;
+
+            // Experience
+            const experienceList = document.getElementById('experience-list');
+            workInfo.experience.forEach((job, index) => {
+                const jobEl = document.createElement('div');
+                jobEl.className = `experience-item-${index} bg-gray-50 p-4 rounded-lg`;
+                jobEl.innerHTML = `
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-2">
+                        <div>
+                            <h3 class="role text-lg font-semibold text-gray-800">${job.role}</h3>
+                            <p class="company text-blue-600 font-medium">${job.company}</p>
+                            <p class="location text-gray-600 text-sm">${job.location}</p>
+                        </div>
+                        <div class="period text-gray-500 text-sm md:text-right mt-2 md:mt-0">
+                            ${job.period}
+                        </div>
+                    </div>
+                    <ul class="features mt-3 space-y-1">
+                        ${job.features.map(feature => `
+                            <li class="text-gray-700 text-sm">• ${feature}</li>
+                        `).join('')}
+                    </ul>
+                `;
+                experienceList.appendChild(jobEl);
+            });
+
+            // Hard Skills
+            const hardSkillsEl = document.getElementById('hard_skills');
+            workInfo.skills.hard_skills.forEach((skillCategory, index) => {
+                const categoryEl = document.createElement('div');
+                categoryEl.className = `skill-category skill-category-${index} mb-4`;
+                categoryEl.innerHTML = `
+                    <h4 class="category font-medium text-gray-800 mb-2">${skillCategory.category}</h4>
+                    <div class="skill_list flex flex-wrap gap-2">
+                        ${skillCategory.skill_list.map(skill => `
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${skill.trim()}</span>
+                        `).join('')}
+                    </div>
+                `;
+                hardSkillsEl.appendChild(categoryEl);
+            });
+
+            // Soft Skills
+            const softSkillsEl = document.getElementById('soft_skills');
+            workInfo.skills.soft_skills.forEach((skillCategory, index) => {
+                const categoryEl = document.createElement('div');
+                categoryEl.className = `skill-category soft-skill-category-${index} mb-4`;
+                categoryEl.innerHTML = `
+                    <h4 class="category font-medium text-gray-800 mb-2">${skillCategory.category}</h4>
+                    <div class="skill_list flex flex-wrap gap-2">
+                        ${skillCategory.skill_list.map(skill => `
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">${skill.trim()}</span>
+                        `).join('')}
+                    </div>
+                `;
+                softSkillsEl.appendChild(categoryEl);
+            });
+
+            // Education
+            const education = data.education;
+            document.getElementById('degree').textContent = education.degree;
+            document.getElementById('school_location').textContent = education.school_location;
+            document.getElementById('period').textContent = education.period;
+
+            // Certifications
+            const certificationsEl = document.getElementById('certifications-list');
+            data.certifications.forEach((cert, index) => {
+                const certEl = document.createElement('div');
+                certEl.className = `certification-item-${index} bg-gray-50 p-3 rounded-lg`;
+                certEl.innerHTML = `
+                    <h4 class="certification_name font-semibold text-gray-800">${cert.certification_name}</h4>
+                    <p class="certification_provider text-gray-600">${cert.certification_provider}</p>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="certification_date text-gray-500 text-sm">${cert.certification_date}</span>
+                        <a href="${cert.certification_link}" target="_blank" class="text-blue-600 text-sm hover:underline">View Certificate</a>
+                    </div>
+                `;
+                certificationsEl.appendChild(certEl);
+            });
+
+            // Interests and Hobbies
+            const interestsEl = document.getElementById('interest_and_hobbies');
+            data.other.interest_and_hobbies.forEach((interest, index) => {
+                const interestEl = document.createElement('div');
+                interestEl.className = `interest-item-${index} mb-4`;
+                interestEl.innerHTML = `
+                    <h4 class="title font-semibold text-gray-800 mb-2">${interest.title}</h4>
+                    <p class="content text-gray-600 text-sm leading-relaxed">${interest.content}</p>
+                `;
+                interestsEl.appendChild(interestEl);
+            });
+
+            // Update document title
+            document.getElementById('document-title').textContent = `${personalInfo.name} - CV`;
+
+            // Hide loading and show CV
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('cv-container').classList.remove('hidden');
+        }
+
+        // Load CV data when page loads
+        document.addEventListener('DOMContentLoaded', loadCVData);
+    </script>
+</body>
+</html>
