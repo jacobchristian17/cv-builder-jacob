@@ -86,8 +86,8 @@
             /* Typography adjustments */
             h1 { font-size: 16pt !important; margin-bottom: 3pt !important; }
             h2 { font-size: 13pt !important; margin-bottom: 4pt !important; margin-top: 8pt !important; }
-            h3 { font-size: 11pt !important; margin-bottom: 2pt !important; }
-            h4 { font-size: 10pt !important; margin-bottom: 2pt !important; }
+            h3 { font-size: 12pt !important; margin-bottom: 1pt !important; }
+            h4 { font-size: 10pt !important; margin-bottom: 1pt !important; }
 
             p { margin-top: 0; margin-bottom: 0;}
             
@@ -278,7 +278,7 @@
             const experienceList = document.getElementById('experience-list');
             workInfo.experience.forEach((job, index) => {
                 const jobEl = document.createElement('div');
-                jobEl.className = `experience-item-${index} bg-gray-50 p-4 rounded-lg`;
+                jobEl.className = `experience-item-${index} rounded-lg`;
                 jobEl.innerHTML = `
                     <div class="flex flex-row justify-between items-start mb-2">
                         <div>
