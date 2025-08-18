@@ -1,6 +1,6 @@
 # Qualifications Extractor Module
 
-Extract key qualifications from resumes that match job descriptions using LLM-powered analysis.
+Extract key qualifications from personal_info.json that match job descriptions using LLM-powered analysis.
 
 ## Features
 
@@ -34,11 +34,8 @@ from modules.qualifications_extractor import QualificationsExtractor
 # Initialize extractor (default: 4 qualifications)
 extractor = QualificationsExtractor()
 
-# Extract qualifications using file paths
-qualifications = extractor.extract_qualifications(
-    job_description_path="job_description.txt"
-    # personal_info_path defaults to "modules/shared/data/personal_info.json"
-)
+# Extract qualifications using personal_info.json and job description file
+qualifications = extractor.extract_qualifications("job_description.txt")
 
 # Format as list
 print(extractor.format_qualifications_list(qualifications, style="bullet"))
@@ -52,7 +49,7 @@ extractor = QualificationsExtractor(num_qualifications=6)
 
 # Or override per extraction
 qualifications = extractor.extract_qualifications(
-    job_description_path="job_description.txt",
+    "job_description.txt",
     num_qualifications=8  # Override for this extraction
 )
 ```
@@ -61,10 +58,7 @@ qualifications = extractor.extract_qualifications(
 
 ```python
 # Match qualifications to specific job requirements
-matches = extractor.match_qualifications_to_requirements(
-    job_description_path="job_description.txt"
-    # personal_info_path defaults to "modules/shared/data/personal_info.json"
-)
+matches = extractor.match_qualifications_to_requirements("job_description.txt")
 
 for match in matches:
     print(f"Qualification: {match.qualification.text}")
@@ -170,26 +164,35 @@ Run the examples to see all features:
 python modules/qualifications_extractor/examples.py
 ```
 
-## Integration with ATS Workflow
+## Creating Input Files
 
-You can integrate this module into the ATS workflow:
+The module reads from personal_info.json (in modules/shared/data/) and a job description text file:
+
+### Job Description File (job.txt)
+```
+Senior Software Engineer Position
+
+Requirements:
+- 5+ years of software development experience
+- Strong experience with Python and JavaScript
+- Experience with containerization (Docker)
+- AWS cloud platform experience
+- Master's degree preferred
+```
+
+### Personal Info File (modules/shared/data/personal_info.json)
+The module automatically reads from this structured JSON file containing your resume data including work experience, skills, education, and certifications.
+
+## Integration Example
 
 ```python
 from modules.qualifications_extractor import QualificationsExtractor
-from modules.ats_checker.ats_scorer.parsers.resume_parser import ResumeParser
 
-# Parse resume
-parser = ResumeParser()
-resume_data = parser.parse("resume.pdf")
-
-# Extract qualifications
+# Simple integration
 extractor = QualificationsExtractor(num_qualifications=5)
-qualifications = extractor.extract_qualifications(
-    resume_data.text,
-    job_description
-)
+qualifications = extractor.extract_qualifications("job.txt")
 
-# Add to CV or cover letter
+# Use in cover letter or summary
 for qual in qualifications:
     print(f"• {qual.text}")
 ```
