@@ -1,24 +1,28 @@
 import os
 from typing import Optional, Dict, Any, List
 from groq import Groq
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class GroqClient:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "llama3-8b-8192",
-        temperature: float = 0.7,
-        max_tokens: int = 1000
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None
     ):
         self.api_key = api_key or os.getenv("GROQ_API_KEY")
         if not self.api_key:
             raise ValueError("Groq API key is required. Set GROQ_API_KEY environment variable or pass api_key parameter.")
         
         self.client = Groq(api_key=self.api_key)
-        self.model = model
-        self.temperature = temperature
-        self.max_tokens = max_tokens
+        self.model = model or os.getenv("GROQ_MODEL", "llama3-8b-8192")
+        self.temperature = temperature if temperature is not None else float(os.getenv("GROQ_TEMPERATURE", "0.7"))
+        self.max_tokens = max_tokens if max_tokens is not None else int(os.getenv("GROQ_MAX_TOKENS", "1000"))
     
     def generate(
         self,
