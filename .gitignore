@@ -147,7 +147,6 @@ data/job_descriptions/*
 !data/job_descriptions/.gitkeep
 output/
 results/
-*.json
 *.pdf
 *.docx
 *.doc

@@ -21,7 +21,7 @@ from jinja2 import Template
 from datetime import datetime
 
 class CVPDFGenerator:
-    def __init__(self, data_file="data/personal_info.json", template_file="ats_cv_template.html"):
+    def __init__(self, data_file="../shared/data/personal_info.json", template_file="ats_cv_template.html"):
         self.data_file = Path(data_file)
         self.template_file = Path(template_file)
         self.output_dir = Path("output")
@@ -171,7 +171,7 @@ async def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Generate PDF from ATS CV template')
-    parser.add_argument('--data', '-d', default='data/personal_info.json', 
+    parser.add_argument('--data', '-d', default='../shared/data/personal_info.json', 
                        help='Path to personal_info.json file (default: data/personal_info.json)')
     parser.add_argument('--template', '-t', default='ats_cv_template.html',
                        help='Path to HTML template file (default: ats_cv_template.html)')

@@ -182,6 +182,51 @@ def analyze_resume(
         sys.exit(1)
 
 
+def get_generated_cv_path(cv_name: Optional[str] = None, verbose: bool = False) -> Optional[str]:
+    """
+    Get the path to a generated CV from the cv_generator module.
+    
+    Args:
+        cv_name: Specific CV filename to look for (optional)
+        verbose: Enable verbose logging
+        
+    Returns:
+        Path to the CV file or None if not found
+    """
+    setup_logging(verbose)
+    logger = logging.getLogger(__name__)
+    
+    # Look in cv_generator output directory
+    cv_output_dir = Path('../cv_generator/output')
+    
+    if not cv_output_dir.exists():
+        logger.error("CV generator output directory not found: ../cv_generator/output")
+        logger.info("Generate a CV first: cd ../cv_generator && python generate_cv_pdf.py")
+        return None
+    
+    if cv_name:
+        # Look for specific file
+        cv_path = cv_output_dir / cv_name
+        if cv_path.exists():
+            logger.info(f"Using specified CV: {cv_path}")
+            return str(cv_path)
+        else:
+            logger.error(f"Specified CV file not found: {cv_path}")
+            return None
+    else:
+        # Find the latest generated CV
+        cv_files = list(cv_output_dir.glob('*.pdf'))
+        if not cv_files:
+            logger.error("No PDF files found in cv_generator output directory")
+            logger.info("Generate a CV first: cd ../cv_generator && python generate_cv_pdf.py")
+            return None
+        
+        # Get the most recently modified file
+        latest_cv = max(cv_files, key=lambda x: x.stat().st_mtime)
+        logger.info(f"Using latest generated CV: {latest_cv.name}")
+        return str(latest_cv)
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -192,8 +237,11 @@ Examples:
   # Analyze resume against job description file
   python main.py resume.pdf job_description.txt
   
-  # Analyze with direct job description text
-  python main.py resume.pdf "Senior Python Developer with 5+ years experience..."
+  # Use generated CV from cv_generator module
+  python main.py --generated-cv job_description.txt
+  
+  # Use specific generated CV file
+  python main.py --generated-cv --cv-name "Jacob_CV_2025.pdf" job_description.txt
   
   # Save results to JSON file
   python main.py resume.pdf job.txt --output results.json
@@ -205,12 +253,24 @@ Examples:
     
     parser.add_argument(
         'resume',
-        help='Path to resume file (PDF, DOCX, or TXT)'
+        nargs='?',
+        help='Path to resume file (PDF, DOCX, or TXT) - optional if using --generated-cv'
     )
     
     parser.add_argument(
         'job_description',
         help='Job description text or path to file containing job description'
+    )
+    
+    parser.add_argument(
+        '--generated-cv',
+        action='store_true',
+        help='Use generated CV from cv_generator module instead of specifying resume path'
+    )
+    
+    parser.add_argument(
+        '--cv-name',
+        help='Specific generated CV filename to use (default: latest generated CV)'
     )
     
     parser.add_argument(
@@ -226,9 +286,21 @@ Examples:
     
     args = parser.parse_args()
     
+    # Determine resume path
+    if args.generated_cv:
+        resume_path = get_generated_cv_path(args.cv_name, args.verbose)
+        if not resume_path:
+            sys.exit(1)
+    else:
+        if not args.resume:
+            print("Error: Resume path required when not using --generated-cv")
+            parser.print_help()
+            sys.exit(1)
+        resume_path = args.resume
+    
     # Run analysis
     analyze_resume(
-        args.resume,
+        resume_path,
         args.job_description,
         args.output,
         args.verbose
