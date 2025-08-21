@@ -39,18 +39,28 @@ class CVPDFGenerator:
     
     def load_qualifications_data(self):
         """Load qualifications data from JSON file if available"""
-        qualifications_file = Path("../shared/qualifications/qualifications.json")
-        try:
-            with open(qualifications_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return {
-                    'job_title': data.get('metadata', {}).get('job_title', 'Not specified'),
-                    'company_name': data.get('metadata', {}).get('company_name', 'Not specified'),
-                    'qualifications': data.get('qualifications', [])
-                }
-        except (FileNotFoundError, json.JSONDecodeError):
-            # Return None if file doesn't exist or is invalid
-            return None
+        # Try different possible paths for qualifications file
+        possible_paths = [
+            Path("../shared/qualifications/qualifications.json"),  # From cv_generator dir
+            Path("modules/shared/qualifications/qualifications.json"),  # From root dir
+            Path("shared/qualifications/qualifications.json"),  # From modules dir
+        ]
+        
+        for qualifications_file in possible_paths:
+            if qualifications_file.exists():
+                try:
+                    with open(qualifications_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        return {
+                            'job_title': data.get('metadata', {}).get('job_title', 'Not specified'),
+                            'company_name': data.get('metadata', {}).get('company_name', 'Not specified'),
+                            'qualifications': data.get('qualifications', [])
+                        }
+                except json.JSONDecodeError:
+                    continue
+        
+        # Return None if no valid file found
+        return None
     
     def create_html_with_data(self, data, qualifications_data=None):
         """Create a complete HTML file with embedded JSON data and qualifications"""
@@ -70,28 +80,58 @@ class CVPDFGenerator:
         old_load_function = """        // Function to load and populate CV data
         async function loadCVData() {
             try {
-                const response = await fetch('./data/personal_info.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // Load personal info data
+                console.log('Loading personal info...');
+                const personalResponse = await fetch('../shared/data/personal_info.json');
+                if (!personalResponse.ok) {
+                    throw new Error(`Failed to load personal info: ${personalResponse.status}`);
                 }
-                const data = await response.json();
-                populateCV(data);
+                const personalData = await personalResponse.json();
+                console.log('Personal data loaded successfully');
+
+                // Try to load qualifications data (optional)
+                let qualificationsData = null;
+                try {
+                    console.log('Loading qualifications...');
+                    const qualResponse = await fetch('../shared/qualifications/qualifications.json');
+                    if (qualResponse.ok) {
+                        qualificationsData = await qualResponse.json();
+                        console.log('Qualifications loaded successfully:', qualificationsData);
+
+                        // Add target position to personal data
+                        personalData.target_position = {
+                            job_title: qualificationsData.metadata?.job_title || 'Not specified',
+                            company_name: qualificationsData.metadata?.company_name || 'Not specified',
+                            qualifications: qualificationsData.qualifications || []
+                        };
+                    } else {
+                        console.log('No qualifications file found (optional)');
+                    }
+                } catch (qualError) {
+                    console.log('Could not load qualifications (optional):', qualError.message);
+                }
+
+                // Populate the CV with combined data
+                populateCV(personalData);
+
             } catch (error) {
                 console.error('Error loading CV data:', error);
                 document.getElementById('loading').innerHTML = `
                     <div class="text-center">
                         <h2 class="text-2xl font-bold text-red-600 mb-4">Error Loading CV Data</h2>
                         <p class="text-gray-600">${error.message}</p>
-                        <p class="text-sm text-gray-500 mt-2">Please ensure the data/personal_info.json file is accessible.</p>
+                        <p class="text-sm text-gray-500 mt-2">Please ensure the ../shared/data/personal_info.json file is accessible.</p>
                     </div>
                 `;
             }
         }"""
         
-        new_load_function = f"""        // Function to load and populate CV data
+        new_load_function = f"""        // Function to load and populate CV data (with embedded data)
         function loadCVData() {{
             try {{
+                console.log('Loading embedded CV data...');
                 const data = {json_data};
+                console.log('Data loaded successfully:', data);
                 populateCV(data);
             }} catch (error) {{
                 console.error('Error loading CV data:', error);
@@ -99,6 +139,7 @@ class CVPDFGenerator:
                     <div class="text-center">
                         <h2 class="text-2xl font-bold text-red-600 mb-4">Error Loading CV Data</h2>
                         <p class="text-gray-600">${{error.message}}</p>
+                        <p class="text-sm text-gray-500 mt-2">Error loading embedded data.</p>
                     </div>
                 `;
             }}
@@ -128,8 +169,8 @@ class CVPDFGenerator:
             # Set content and wait for it to load
             await page.set_content(html_content, wait_until='networkidle')
             
-            # Wait for the CV to be populated
-            await page.wait_for_selector('#cv-container:not(.hidden)', timeout=10000)
+            # Wait for the CV to be populated (increased timeout for complex data processing)
+            await page.wait_for_selector('#cv-container:not(.hidden)', timeout=30000)
             
             # Generate PDF with print-optimized settings
             pdf_buffer = await page.pdf(

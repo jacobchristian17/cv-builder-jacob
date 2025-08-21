@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,21 +8,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            .no-print { display: none !important; }
-            
+            .no-print {
+                display: none !important;
+            }
+
             /* Print page setup */
             @page {
                 size: A4;
                 margin: 0.5in;
             }
-            
-            body { 
-                -webkit-print-color-adjust: exact; 
+
+            body {
+                -webkit-print-color-adjust: exact;
                 color-adjust: exact;
                 font-size: 11pt !important;
                 line-height: 1.3 !important;
             }
-            
+
             /* Container adjustments */
             #cv-container {
                 max-width: none !important;
@@ -29,115 +32,213 @@
                 padding: 0 !important;
                 box-shadow: none !important;
             }
-            
+
             /* Fix flexbox layouts for print */
             .personal_info .flex {
                 display: table !important;
                 width: 100% !important;
             }
-            
-            .personal_info .flex > div:first-child {
+
+            .personal_info .flex>div:first-child {
                 display: table-cell !important;
                 width: 65% !important;
                 vertical-align: top !important;
                 padding-right: 20pt !important;
             }
-            
-            .personal_info .flex > div:last-child {
+
+            .personal_info .flex>div:last-child {
                 display: table-cell !important;
                 width: 35% !important;
                 text-align: right !important;
                 vertical-align: top !important;
             }
-            
+
             /* Experience item layouts */
             .experience-item .flex {
                 display: table !important;
                 width: 100% !important;
             }
-            
-            .experience-item .flex > div:first-child {
+
+            .experience-item .flex>div:first-child {
                 display: table-cell !important;
                 width: 70% !important;
                 vertical-align: top !important;
                 padding-right: 10pt !important;
             }
-            
-            .experience-item .flex > div:last-child {
+
+            .experience-item .flex>div:last-child {
                 display: table-cell !important;
                 width: 30% !important;
                 text-align: right !important;
                 vertical-align: top !important;
             }
-            
+
             /* Skills grid fix */
             .skills .grid {
                 display: table !important;
                 width: 100% !important;
             }
-            
-            .skills .grid > div {
+
+            .skills .grid>div {
                 display: table-cell !important;
                 width: 50% !important;
                 vertical-align: top !important;
                 padding-right: 10pt !important;
             }
-            
-            /* Typography adjustments */
-            h1 { font-size: 16pt !important; margin-bottom: 3pt !important; }
-            h2 { font-size: 13pt !important; margin-bottom: 4pt !important; margin-top: 8pt !important; }
-            h3 { font-size: 12pt !important; margin-bottom: 1pt !important; }
-            h4 { font-size: 10pt !important; margin-bottom: 1pt !important; }
 
-            p { margin-top: 0; margin-bottom: 0;}
-            
-            .text-xs { font-size: 8pt !important; }
-            .text-sm { font-size: 9pt !important; }
-            .text-base { font-size: 10pt !important; }
-            .text-lg { font-size: 11pt !important; }
-            .text-xl { font-size: 12pt !important; }
-            .text-2xl { font-size: 14pt !important; }
-            
+            /* Typography adjustments */
+            h1 {
+                font-size: 16pt !important;
+                margin-bottom: 3pt !important;
+            }
+
+            h2 {
+                font-size: 13pt !important;
+                margin-bottom: 4pt !important;
+                margin-top: 8pt !important;
+            }
+
+            h3 {
+                font-size: 12pt !important;
+                margin-bottom: 1pt !important;
+            }
+
+            h4 {
+                font-size: 10pt !important;
+                margin-bottom: 1pt !important;
+            }
+
+            p {
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            .text-xs {
+                font-size: 8pt !important;
+            }
+
+            .text-sm {
+                font-size: 9pt !important;
+            }
+
+            .text-base {
+                font-size: 10pt !important;
+            }
+
+            .text-lg {
+                font-size: 11pt !important;
+            }
+
+            .text-xl {
+                font-size: 12pt !important;
+            }
+
+            .text-2xl {
+                font-size: 14pt !important;
+            }
+
             /* Spacing adjustments */
-            .mb-8 { margin-bottom: 8pt !important; }
-            .mb-6 { margin-bottom: 6pt !important; }
-            .mb-4 { margin-bottom: 4pt !important; }
-            .mb-2 { margin-bottom: 2pt !important; }
-            .pb-6 { padding-bottom: 6pt !important; }
-            .pb-2 { padding-bottom: 2pt !important; }
-            .p-3 { padding: 4pt !important; }
-            
-            /* Page break controls */
-            .personal_info { page-break-after: avoid; }
-            .target-position { page-break-inside: avoid; }
-            .work_info { page-break-inside: avoid; }
-            .skills { page-break-inside: avoid; }
-            .education { page-break-inside: avoid; }
-            .certifications { page-break-inside: avoid; }
-            .other { page-break-inside: avoid; }
-            .experience-item { page-break-inside: avoid; margin-bottom: 6pt !important; }
-            
-            /* Target position section styles */
-            .target-position {
-                background: linear-gradient(to right, #f0f9ff, #f0f8ff) !important;
-                border: 1pt solid #0ea5e9 !important;
+            .mb-8 {
                 margin-bottom: 8pt !important;
             }
-            
+
+            .mb-6 {
+                margin-bottom: 6pt !important;
+            }
+
+            .mb-4 {
+                margin-bottom: 4pt !important;
+            }
+
+            .mb-2 {
+                margin-bottom: 2pt !important;
+            }
+
+            .pb-6 {
+                padding-bottom: 6pt !important;
+            }
+
+            .pb-2 {
+                padding-bottom: 2pt !important;
+            }
+
+            .p-3 {
+                padding: 4pt !important;
+            }
+
+            /* Page break controls */
+            .personal_info {
+                page-break-after: avoid;
+                margin-bottom: 4pt !important;
+            }
+
+            .target-position {
+                page-break-inside: avoid !important;
+                page-break-before: avoid !important;
+                page-break-after: avoid !important;
+                margin-top: 2pt !important;
+                margin-bottom: 4pt !important;
+                padding: 6pt !important;
+                orphans: 3;
+                widows: 3;
+            }
+
+            .work_info {
+                page-break-inside: avoid;
+                margin-top: 2pt !important;
+            }
+
+            .skills {
+                page-break-inside: avoid;
+            }
+
+            .education {
+                page-break-inside: avoid;
+            }
+
+            .certifications {
+                page-break-inside: avoid;
+            }
+
+            .other {
+                page-break-inside: avoid;
+            }
+
+            .experience-item {
+                page-break-inside: avoid;
+                margin-bottom: 4pt !important;
+            }
+
+            /* Target position section styles */
+            .target-position {
+                /* background: linear-gradient(to right, #f0fdf4, #ecfdf5) !important;
+                border: 1pt solid #10b981 !important; */
+                margin-bottom: 2pt !important;
+                padding: 6pt !important;
+            }
+
+            /* Ensure target position content stays together */
+            #target-position-section .bg-gradient-to-r {
+                page-break-inside: avoid !important;
+                padding: 5pt 15pt !important;
+            }
+
+            /* Optimize qualification items for print */
             .qualification-item {
                 display: flex !important;
                 align-items: center !important;
-                margin-bottom: 2pt !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 1pt !important;
                 font-size: 8pt !important;
-                line-height: 1.3 !important;
+                line-height: 1.2 !important;
             }
-            
+
             .qualification-bullet {
-                color: #0ea5e9 !important;
+                color: #075985 !important;
                 margin-right: 4pt !important;
                 font-weight: bold !important;
             }
-            
+
             /* Skill tags optimization */
             .skill_list span {
                 display: inline-block !important;
@@ -151,24 +252,26 @@
                 -webkit-print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
-            
+
             /* Ensure background colors print */
-            .bg-sky-100, .skill_list .bg-sky-100 {
+            .bg-sky-100,
+            .skill_list .bg-sky-100 {
                 background-color: #e0f2fe !important;
                 -webkit-print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
-            
-            .bg-sky-50, .skill_list .bg-sky-50 {
+
+            .bg-sky-50,
+            .skill_list .bg-sky-50 {
                 background-color: #f0f9ff !important;
                 -webkit-print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
-            
+
             .text-sky-800 {
                 color: #075985 !important;
             }
-            
+
             /* Remove shadows and reduce spacing */
             * {
                 box-shadow: none !important;
@@ -176,10 +279,13 @@
                 transition: none !important;
             }
         }
-        
-        .skill-category { page-break-inside: avoid; }
+
+        .skill-category {
+            page-break-inside: avoid;
+        }
     </style>
 </head>
+
 <body class="bg-gray-50 font-sans">
     <!-- Loading indicator -->
     <div id="loading" class="fixed inset-0 bg-white flex items-center justify-center z-50">
@@ -189,7 +295,7 @@
     <!-- CV Container -->
     <div id="cv-container" class="max-w-4xl mx-auto bg-white shadow-lg my-8 p-8 hidden">
         <!-- Header Section -->
-        <header class="personal_info border-b-2 border-gray-200 pb-6 mb-8">
+        <header class="personal_info border-b-2 border-gray-200 pb-4 mb-2">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="mb-4 md:mb-0">
                     <h1 id="full_name" class="name text-2xl font-bold text-gray-800 mb-2"></h1>
@@ -207,18 +313,13 @@
         </header>
 
         <!-- Target Position Qualifications Section -->
-        <section id="target-position-section" class="target-position mb-8 hidden">
-            <div class="bg-gradient-to-r from-sky-50 to-blue-50 p-6 rounded-lg border border-sky-200">
-                <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
-                    <span class="text-sky-600 mr-2">🎯</span>
-                    Target Position
-                </h2>
-                <div class="mb-4">
-                    <div id="target-job-title" class="text-xl font-semibold text-sky-800 mb-1"></div>
-                    <div id="target-company" class="text-lg text-gray-600 mb-3"></div>
+        <section id="target-position-section" class="target-position mb-1 hidden">
+            <div class="bg-gradient-to-r from-sky-50 to-blue-50 p-3 rounded-lg border border-sky-200">
+                <div class="mb-2">
+                    <div id="target-job-title" class="text-sm font-semibold text-sky-800 mb-1"></div>
+                    <div id="target-company" class="text-sm text-gray-600 mb-2"></div>
                 </div>
-                <h3 class="font-semibold text-gray-700 mb-3 text-base">Key Qualifications:</h3>
-                <div id="target-qualifications" class="grid md:grid-cols-2 gap-2"></div>
+                <div id="target-qualifications" class="grid md:grid-cols-2 gap-1"></div>
             </div>
         </section>
 
@@ -280,10 +381,12 @@
 
     <!-- Print Controls -->
     <div class="no-print fixed bottom-4 right-4 space-y-2">
-        <button onclick="printToPDF()" class="block w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+        <button onclick="printToPDF()"
+            class="block w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
             📄 Save as PDF
         </button>
-        <button onclick="window.print()" class="block w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+        <button onclick="window.print()"
+            class="block w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
             🖨️ Print CV
         </button>
     </div>
@@ -292,19 +395,47 @@
         // Function to load and populate CV data
         async function loadCVData() {
             try {
-                const response = await fetch('./data/personal_info.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // Load personal info data
+                console.log('Loading personal info...');
+                const personalResponse = await fetch('../shared/data/personal_info.json');
+                if (!personalResponse.ok) {
+                    throw new Error(`Failed to load personal info: ${personalResponse.status}`);
                 }
-                const data = await response.json();
-                populateCV(data);
+                const personalData = await personalResponse.json();
+                console.log('Personal data loaded successfully');
+
+                // Try to load qualifications data (optional)
+                let qualificationsData = null;
+                try {
+                    console.log('Loading qualifications...');
+                    const qualResponse = await fetch('../shared/qualifications/qualifications.json');
+                    if (qualResponse.ok) {
+                        qualificationsData = await qualResponse.json();
+                        console.log('Qualifications loaded successfully:', qualificationsData);
+
+                        // Add target position to personal data
+                        personalData.target_position = {
+                            job_title: qualificationsData.metadata?.job_title || 'Not specified',
+                            company_name: qualificationsData.metadata?.company_name || 'Not specified',
+                            qualifications: qualificationsData.qualifications || []
+                        };
+                    } else {
+                        console.log('No qualifications file found (optional)');
+                    }
+                } catch (qualError) {
+                    console.log('Could not load qualifications (optional):', qualError.message);
+                }
+
+                // Populate the CV with combined data
+                populateCV(personalData);
+
             } catch (error) {
                 console.error('Error loading CV data:', error);
                 document.getElementById('loading').innerHTML = `
                     <div class="text-center">
                         <h2 class="text-2xl font-bold text-red-600 mb-4">Error Loading CV Data</h2>
                         <p class="text-gray-600">${error.message}</p>
-                        <p class="text-sm text-gray-500 mt-2">Please ensure the data/personal_info.json file is accessible.</p>
+                        <p class="text-sm text-gray-500 mt-2">Please ensure the ../shared/data/personal_info.json file is accessible.</p>
                     </div>
                 `;
             }
@@ -318,13 +449,13 @@
             document.getElementById('job_title').textContent = personalInfo.job_title;
             document.getElementById('mobile').textContent = personalInfo.mobile;
             document.getElementById('email').textContent = personalInfo.email;
-            
+
             // Website with link
             const websiteEl = document.getElementById('website');
             if (personalInfo.website) {
                 websiteEl.innerHTML = `<a href="${personalInfo.website.url}" target="_blank" class="hover:underline">${personalInfo.website.text}</a>`;
             }
-            
+
             // LinkedIn with link
             const linkedinEl = document.getElementById('linkedin');
             if (personalInfo.linkedin) {
@@ -344,21 +475,21 @@
             if (data.target_position) {
                 const targetSection = document.getElementById('target-position-section');
                 const jobTitleEl = document.getElementById('target-job-title');
-                const companyEl = document.getElementById('target-company');
                 const qualificationsEl = document.getElementById('target-qualifications');
-                
+
                 // Show the section
                 targetSection.classList.remove('hidden');
-                
+
                 // Populate job title and company
                 if (data.target_position.job_title && data.target_position.job_title !== 'Not specified') {
-                    jobTitleEl.textContent = data.target_position.job_title;
+                    if (data.target_position.company_name && data.target_position.company_name !== 'Not specified') {
+                        jobTitleEl.textContent = `Top qualifications as ${data.target_position.job_title} at ${data.target_position.company_name}`;
+                    } else {
+                        jobTitleEl.textContent = `Top qualifications as ${data.target_position.job_title}`;
+                    }
+
                 }
-                
-                if (data.target_position.company_name && data.target_position.company_name !== 'Not specified') {
-                    companyEl.textContent = `at ${data.target_position.company_name}`;
-                }
-                
+
                 // Populate qualifications
                 if (data.target_position.qualifications && data.target_position.qualifications.length > 0) {
                     data.target_position.qualifications.forEach(qual => {
@@ -366,7 +497,7 @@
                         qualEl.className = 'qualification-item';
                         qualEl.innerHTML = `
                             <span class="qualification-bullet">•</span>
-                            <span class="text-gray-700">${qual.text}</span>
+                            <span class="text-gray-700 text-sm leading-snug">${qual.text}</span>
                         `;
                         qualificationsEl.appendChild(qualEl);
                     });
@@ -405,10 +536,10 @@
                 categoryEl.className = `skill-category skill-category-${index}`;
                 categoryEl.innerHTML = `
                     <h4 class="category text-sm font-medium text-gray-700 mb-1">${skillCategory.category}</h4>
-                    <div class="skill_list flex flex-wrap gap-1">
+                    <div class="skill_list flex flex-wrap gap-1 text-xs text-gray-500">
                         ${skillCategory.skill_list.map(skill => `
-                            <span class="bg-sky-100 text-sky-800 px-2 pb-1 rounded text-xs">${skill.trim()}</span>
-                        `).join('')}
+                            ${skill.trim()}
+                        `).join(', ')}
                     </div>
                 `;
                 hardSkillsEl.appendChild(categoryEl);
@@ -421,10 +552,10 @@
                 categoryEl.className = `skill-category soft-skill-category-${index}`;
                 categoryEl.innerHTML = `
                     <h4 class="category text-sm font-medium text-gray-800 mb-1">${skillCategory.category}</h4>
-                    <div class="skill_list flex flex-wrap gap-1">
+                    <div class="skill_list flex flex-wrap gap-1 text-gray-500 text-xs">
                         ${skillCategory.skill_list.map(skill => `
-                            <span class="bg-sky-50 text-sky-800 px-2 py-1 rounded text-xs">${skill.trim()}</span>
-                        `).join('')}
+                            ${skill.trim()}
+                        `).join(',')}
                     </div>
                 `;
                 softSkillsEl.appendChild(categoryEl);
@@ -477,17 +608,17 @@
             // Get the person's name for the filename
             const name = document.getElementById('full_name').textContent || 'CV';
             const filename = name.replace(/\s+/g, '_') + '_CV.pdf';
-            
+
             // Set document title for PDF
             const originalTitle = document.title;
             document.title = filename.replace('.pdf', '');
-            
+
             // Trigger print dialog with instructions
             alert('In the print dialog:\n1. Select "Save as PDF" as destination\n2. Set filename to: ' + filename + '\n3. Ensure "Background graphics" is enabled');
-            
+
             // Open print dialog
             window.print();
-            
+
             // Restore original title
             setTimeout(() => {
                 document.title = originalTitle;
@@ -498,4 +629,5 @@
         document.addEventListener('DOMContentLoaded', loadCVData);
     </script>
 </body>
+
 </html>

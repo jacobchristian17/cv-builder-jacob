@@ -24,6 +24,6 @@ MANUAL TEST:
    python modules/cv_generator/manual_test.py
 """
 
-from .generate_pdf import CVPDFGenerator
+from .generate_cv_pdf import CVPDFGenerator
 
 __all__ = ['CVPDFGenerator']
