@@ -133,7 +133,7 @@ def test_cv_generator_import():
     print("-" * 40)
     
     try:
-        from modules.cv_generator.generate_pdf import CVPDFGenerator
+        from modules.cv_generator.generate_cv_pdf import CVPDFGenerator
         print("✅ CVPDFGenerator imported successfully")
         
         # Test initialization
@@ -158,13 +158,50 @@ def test_cv_generator_import():
         return False
 
 
+def test_qualifications_file():
+    """Test if qualifications.json exists and is valid."""
+    print("\n🎯 Testing Qualifications File")
+    print("-" * 40)
+    
+    qualifications_path = "modules/shared/qualifications/qualifications.json"
+    
+    if os.path.exists(qualifications_path):
+        print(f"✅ Found: {qualifications_path}")
+        try:
+            import json
+            with open(qualifications_path, 'r') as f:
+                data = json.load(f)
+            
+            # Check structure
+            if 'metadata' in data:
+                meta = data['metadata']
+                print(f"✅ Job Title: {meta.get('job_title', 'Not specified')}")
+                print(f"✅ Company: {meta.get('company_name', 'Not specified')}")
+            
+            if 'qualifications' in data:
+                quals = data['qualifications']
+                print(f"✅ Qualifications count: {len(quals)}")
+                if quals:
+                    print(f"   Sample: {quals[0].get('text', 'N/A')[:50]}...")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error reading qualifications file: {e}")
+            return False
+    else:
+        print(f"⚠️  File not found: {qualifications_path}")
+        print("   This is optional - run qual.py first to generate qualifications")
+        return True  # Not required for CV generation
+
+
 def test_data_loading():
     """Test data loading functionality."""
     print("\n📊 Testing Data Loading")
     print("-" * 40)
     
     try:
-        from modules.cv_generator.generate_pdf import CVPDFGenerator
+        from modules.cv_generator.generate_cv_pdf import CVPDFGenerator
         
         generator = CVPDFGenerator(
             data_file="modules/shared/data/personal_info.json",
@@ -207,7 +244,7 @@ def test_template_rendering():
     print("-" * 40)
     
     try:
-        from modules.cv_generator.generate_pdf import CVPDFGenerator
+        from modules.cv_generator.generate_cv_pdf import CVPDFGenerator
         
         generator = CVPDFGenerator(
             data_file="modules/shared/data/personal_info.json",
@@ -249,7 +286,7 @@ async def test_pdf_generation():
     print("-" * 40)
     
     try:
-        from modules.cv_generator.generate_pdf import CVPDFGenerator
+        from modules.cv_generator.generate_cv_pdf import CVPDFGenerator
         
         generator = CVPDFGenerator(
             data_file="modules/shared/data/personal_info.json",
@@ -295,7 +332,7 @@ async def test_custom_filename():
     print("-" * 40)
     
     try:
-        from modules.cv_generator.generate_pdf import CVPDFGenerator
+        from modules.cv_generator.generate_cv_pdf import CVPDFGenerator
         
         generator = CVPDFGenerator()
         
@@ -355,6 +392,7 @@ async def run_all_tests():
     # Synchronous tests
     sync_tests = [
         test_personal_info_file,
+        test_qualifications_file,
         test_template_file,
         test_output_directory,
         test_cv_generator_import,

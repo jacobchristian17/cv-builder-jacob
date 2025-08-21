@@ -109,12 +109,34 @@
             
             /* Page break controls */
             .personal_info { page-break-after: avoid; }
+            .target-position { page-break-inside: avoid; }
             .work_info { page-break-inside: avoid; }
             .skills { page-break-inside: avoid; }
             .education { page-break-inside: avoid; }
             .certifications { page-break-inside: avoid; }
             .other { page-break-inside: avoid; }
             .experience-item { page-break-inside: avoid; margin-bottom: 6pt !important; }
+            
+            /* Target position section styles */
+            .target-position {
+                background: linear-gradient(to right, #f0f9ff, #f0f8ff) !important;
+                border: 1pt solid #0ea5e9 !important;
+                margin-bottom: 8pt !important;
+            }
+            
+            .qualification-item {
+                display: flex !important;
+                align-items: center !important;
+                margin-bottom: 2pt !important;
+                font-size: 8pt !important;
+                line-height: 1.3 !important;
+            }
+            
+            .qualification-bullet {
+                color: #0ea5e9 !important;
+                margin-right: 4pt !important;
+                font-weight: bold !important;
+            }
             
             /* Skill tags optimization */
             .skill_list span {
@@ -183,6 +205,22 @@
                 </div>
             </div>
         </header>
+
+        <!-- Target Position Qualifications Section -->
+        <section id="target-position-section" class="target-position mb-8 hidden">
+            <div class="bg-gradient-to-r from-sky-50 to-blue-50 p-6 rounded-lg border border-sky-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="text-sky-600 mr-2">🎯</span>
+                    Target Position
+                </h2>
+                <div class="mb-4">
+                    <div id="target-job-title" class="text-xl font-semibold text-sky-800 mb-1"></div>
+                    <div id="target-company" class="text-lg text-gray-600 mb-3"></div>
+                </div>
+                <h3 class="font-semibold text-gray-700 mb-3 text-base">Key Qualifications:</h3>
+                <div id="target-qualifications" class="grid md:grid-cols-2 gap-2"></div>
+            </div>
+        </section>
 
         <!-- Work Experience Section -->
         <section class="work_info mb-8">
@@ -301,6 +339,39 @@
             // Work Info
             const workInfo = data.work_info;
             document.getElementById('summary').textContent = workInfo.summary;
+
+            // Target Position (if available)
+            if (data.target_position) {
+                const targetSection = document.getElementById('target-position-section');
+                const jobTitleEl = document.getElementById('target-job-title');
+                const companyEl = document.getElementById('target-company');
+                const qualificationsEl = document.getElementById('target-qualifications');
+                
+                // Show the section
+                targetSection.classList.remove('hidden');
+                
+                // Populate job title and company
+                if (data.target_position.job_title && data.target_position.job_title !== 'Not specified') {
+                    jobTitleEl.textContent = data.target_position.job_title;
+                }
+                
+                if (data.target_position.company_name && data.target_position.company_name !== 'Not specified') {
+                    companyEl.textContent = `at ${data.target_position.company_name}`;
+                }
+                
+                // Populate qualifications
+                if (data.target_position.qualifications && data.target_position.qualifications.length > 0) {
+                    data.target_position.qualifications.forEach(qual => {
+                        const qualEl = document.createElement('div');
+                        qualEl.className = 'qualification-item';
+                        qualEl.innerHTML = `
+                            <span class="qualification-bullet">•</span>
+                            <span class="text-gray-700">${qual.text}</span>
+                        `;
+                        qualificationsEl.appendChild(qualEl);
+                    });
+                }
+            }
 
             // Experience
             const experienceList = document.getElementById('experience-list');

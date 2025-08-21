@@ -5,11 +5,14 @@ Extract key qualifications from personal_info.json that match job descriptions u
 ## Features
 
 - **Intelligent Extraction**: Uses Groq LLM to identify the most relevant qualifications
+- **Auto Job Detection**: Automatically extracts job title and company name from job descriptions
+- **Automatic JSON Saving**: Saves extracted qualifications to JSON files for pipeline integration
 - **Configurable Output**: Set the number of qualifications to extract (default: 4)
 - **Multiple Formats**: Output as bullet points, numbered list, or detailed view
 - **Qualification Matching**: Match qualifications to specific job requirements
 - **Summary Generation**: Create professional summary paragraphs from qualifications
 - **Ranking Options**: Sort by relevance, experience, or type
+- **JSON Loading**: Load previously extracted qualifications from JSON
 - **Fallback Mode**: Works without LLM using pattern matching
 
 ## Installation
@@ -26,19 +29,29 @@ GROQ_API_KEY=your_key_here
 
 ## Usage
 
-### Basic Extraction
+### Basic Extraction (Auto-Save to JSON)
 
 ```python
 from modules.qualifications_extractor import QualificationsExtractor
 
-# Initialize extractor (default: 4 qualifications)
+# Initialize extractor (auto-saves to JSON by default)
 extractor = QualificationsExtractor()
 
-# Extract qualifications using personal_info.json and job description file
+# Extract qualifications - automatically saved to modules/shared/qualifications/
+# Job title and company name are automatically extracted from the job description
 qualifications = extractor.extract_qualifications("job_description.txt")
 
 # Format as list
 print(extractor.format_qualifications_list(qualifications, style="bullet"))
+
+# Disable auto-save if needed
+extractor = QualificationsExtractor(auto_save=False)
+
+# Or override per extraction
+qualifications = extractor.extract_qualifications(
+    "job_description.txt",
+    save_to_json=False  # Don't save this extraction
+)
 ```
 
 ### Custom Number of Qualifications
@@ -170,7 +183,9 @@ The module reads from personal_info.json (in modules/shared/data/) and a job des
 
 ### Job Description File (job.txt)
 ```
-Senior Software Engineer Position
+Senior Software Engineer Position at Tech Corp
+
+We are looking for a talented Senior Software Engineer to join our growing team.
 
 Requirements:
 - 5+ years of software development experience
@@ -180,6 +195,10 @@ Requirements:
 - Master's degree preferred
 ```
 
+The module will automatically extract:
+- **Job Title**: "Senior Software Engineer"
+- **Company Name**: "Tech Corp"
+
 ### Personal Info File (modules/shared/data/personal_info.json)
 The module automatically reads from this structured JSON file containing your resume data including work experience, skills, education, and certifications.
 
@@ -188,13 +207,52 @@ The module automatically reads from this structured JSON file containing your re
 ```python
 from modules.qualifications_extractor import QualificationsExtractor
 
-# Simple integration
+# Extract and auto-save for pipeline
 extractor = QualificationsExtractor(num_qualifications=5)
-qualifications = extractor.extract_qualifications("job.txt")
+qualifications = extractor.extract_qualifications(
+    "job.txt",
+    output_filename="senior_engineer_qualifications.json"
+)
 
-# Use in cover letter or summary
+# Later in pipeline, load the saved qualifications
+extractor = QualificationsExtractor()
+qualifications = extractor.load_qualifications_from_json(
+    "modules/shared/qualifications/senior_engineer_qualifications.json"
+)
+
+# Use in CV generation
 for qual in qualifications:
     print(f"• {qual.text}")
+```
+
+## JSON Output Structure
+
+Extracted qualifications are saved to `modules/shared/qualifications/` with this structure:
+
+```json
+{
+  "metadata": {
+    "timestamp": "2024-01-15T10:30:00",
+    "job_description_file": "job.txt",
+    "num_qualifications": 4
+  },
+  "qualifications": [
+    {
+      "text": "7+ years of software development experience",
+      "type": "experience",
+      "relevance_score": 95.0,
+      "evidence": "7 years of professional software development...",
+      "years_experience": 7
+    },
+    {
+      "text": "Master's degree in Computer Science",
+      "type": "education",
+      "relevance_score": 90.0,
+      "evidence": "Master's degree in Computer Science from MIT...",
+      "years_experience": null
+    }
+  ]
+}
 ```
 
 ## Without LLM

@@ -6,6 +6,7 @@ import logging
 from typing import List, Dict, Any, Optional, Union
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Add path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -24,7 +25,9 @@ class QualificationsExtractor:
         num_qualifications: int = 4,
         use_llm: bool = True,
         temperature: float = 0.3,
-        max_tokens: int = 2000
+        max_tokens: int = 2000,
+        auto_save: bool = True,
+        output_dir: str = "modules/shared/qualifications"
     ):
         """
         Initialize the qualifications extractor.
@@ -34,9 +37,13 @@ class QualificationsExtractor:
             use_llm: Whether to use LLM for extraction
             temperature: LLM temperature for generation
             max_tokens: Maximum tokens for LLM response
+            auto_save: Whether to automatically save extracted qualifications to JSON
+            output_dir: Directory to save qualification JSON files
         """
         self.num_qualifications = num_qualifications
         self.use_llm = use_llm
+        self.auto_save = auto_save
+        self.output_dir = Path(output_dir)
         
         if self.use_llm:
             try:
@@ -57,7 +64,11 @@ class QualificationsExtractor:
         self,
         job_description_path: str,
         num_qualifications: Optional[int] = None,
-        personal_info_path: str = "modules/shared/data/personal_info.json"
+        personal_info_path: str = "modules/shared/data/personal_info.json",
+        save_to_json: Optional[bool] = None,
+        output_filename: Optional[str] = None,
+        job_title: Optional[str] = None,
+        company_name: Optional[str] = None
     ) -> List[Qualification]:
         """
         Extract key qualifications from personal_info.json that match the job description.
@@ -66,11 +77,16 @@ class QualificationsExtractor:
             job_description_path: Path to job description text file
             num_qualifications: Override default number of qualifications
             personal_info_path: Path to personal_info.json file
+            save_to_json: Override auto_save setting for this extraction
+            output_filename: Custom filename for JSON output (default: qualifications.json)
+            job_title: Job title for the position
+            company_name: Company name for the position
             
         Returns:
             List of Qualification objects
         """
         num_quals = num_qualifications or self.num_qualifications
+        should_save = save_to_json if save_to_json is not None else self.auto_save
         
         # Load personal info and job description
         try:
@@ -79,6 +95,14 @@ class QualificationsExtractor:
         except Exception as e:
             logger.error(f"Failed to load files: {e}")
             raise ValueError(f"Could not load required files: {e}")
+        
+        # Extract job title and company from job description if not provided
+        if (job_title is None or company_name is None) and (self.use_llm and self.llm_client):
+            extracted_info = self._extract_job_info(job_description)
+            if job_title is None:
+                job_title = extracted_info.get('job_title')
+            if company_name is None:
+                company_name = extracted_info.get('company_name')
         
         if not self.use_llm or not self.llm_client:
             return self._extract_basic_qualifications(resume_text, job_description, num_quals)
@@ -138,12 +162,34 @@ Return as JSON with the specified format."""
                     )
                     qualifications.append(qualification)
                 
+                # Save to JSON if requested
+                if should_save:
+                    self._save_qualifications_to_json(
+                        qualifications, 
+                        job_description_path,
+                        output_filename,
+                        job_title,
+                        company_name
+                    )
+                
                 return qualifications
                 
         except Exception as e:
             logger.error(f"LLM extraction failed: {e}")
         
-        return self._extract_basic_qualifications(resume_text, job_description, num_quals)
+        qualifications = self._extract_basic_qualifications(resume_text, job_description, num_quals)
+        
+        # Save to JSON if requested
+        if should_save:
+            self._save_qualifications_to_json(
+                qualifications,
+                job_description_path, 
+                output_filename,
+                job_title,
+                company_name
+            )
+        
+        return qualifications
     
     def format_qualifications_list(
         self,
@@ -185,7 +231,11 @@ Return as JSON with the specified format."""
         self,
         job_description_path: str,
         num_qualifications: Optional[int] = None,
-        personal_info_path: str = "modules/shared/data/personal_info.json"
+        personal_info_path: str = "modules/shared/data/personal_info.json",
+        save_to_json: Optional[bool] = None,
+        output_filename: Optional[str] = None,
+        job_title: Optional[str] = None,
+        company_name: Optional[str] = None
     ) -> List[QualificationMatch]:
         """
         Extract qualifications and match them to specific job requirements.
@@ -194,6 +244,10 @@ Return as JSON with the specified format."""
             job_description_path: Path to job description text file
             num_qualifications: Override default number of qualifications
             personal_info_path: Path to personal_info.json file
+            save_to_json: Override auto_save setting for this extraction
+            output_filename: Custom filename for JSON output (default: qualification_matches.json)
+            job_title: Job title for the position
+            company_name: Company name for the position
             
         Returns:
             List of QualificationMatch objects
@@ -207,6 +261,14 @@ Return as JSON with the specified format."""
         except Exception as e:
             logger.error(f"Failed to load files: {e}")
             raise ValueError(f"Could not load required files: {e}")
+        
+        # Extract job title and company from job description if not provided
+        if (job_title is None or company_name is None) and (self.use_llm and self.llm_client):
+            extracted_info = self._extract_job_info(job_description)
+            if job_title is None:
+                job_title = extracted_info.get('job_title')
+            if company_name is None:
+                company_name = extracted_info.get('company_name')
         
         if not self.use_llm or not self.llm_client:
             qualifications = self._extract_basic_qualifications(resume_text, job_description, num_quals)
@@ -278,6 +340,17 @@ Return as JSON with the specified format."""
                     )
                     matches.append(match)
                 
+                # Save to JSON if requested
+                should_save = save_to_json if save_to_json is not None else self.auto_save
+                if should_save:
+                    self._save_matches_to_json(
+                        matches,
+                        job_description_path,
+                        output_filename,
+                        job_title,
+                        company_name
+                    )
+                
                 return matches
                 
         except Exception as e:
@@ -285,7 +358,20 @@ Return as JSON with the specified format."""
         
         # Fallback
         qualifications = self._extract_basic_qualifications(resume_text, job_description, num_quals)
-        return [self._create_basic_match(qual, job_description) for qual in qualifications]
+        matches = [self._create_basic_match(qual, job_description) for qual in qualifications]
+        
+        # Save to JSON if requested
+        should_save = save_to_json if save_to_json is not None else self.auto_save
+        if should_save:
+            self._save_matches_to_json(
+                matches,
+                job_description_path,
+                output_filename,
+                job_title,
+                company_name
+            )
+        
+        return matches
     
     def generate_qualification_summary(
         self,
@@ -569,6 +655,205 @@ Requirements:
                 text_parts.append(f"{title}: {content}")
         
         return '\n'.join(text_parts)
+    
+    def _save_qualifications_to_json(
+        self,
+        qualifications: List[Qualification],
+        job_description_path: str,
+        output_filename: Optional[str] = None,
+        job_title: Optional[str] = None,
+        company_name: Optional[str] = None
+    ) -> str:
+        """
+        Save qualifications to JSON file.
+        
+        Args:
+            qualifications: List of Qualification objects
+            job_description_path: Path to job description file (used for metadata)
+            output_filename: Custom filename (default: qualifications.json)
+            job_title: Job title for the position
+            company_name: Company name for the position
+            
+        Returns:
+            Path to saved JSON file
+        """
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate filename if not provided
+        if not output_filename:
+            output_filename = "qualifications.json"
+        
+        output_path = self.output_dir / output_filename
+        
+        # Convert qualifications to dict
+        data = {
+            "metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "job_description_file": job_description_path,
+                "job_title": job_title or "Not specified",
+                "company_name": company_name or "Not specified",
+                "num_qualifications": len(qualifications)
+            },
+            "qualifications": [
+                {
+                    "text": qual.text,
+                    "type": qual.type.value,
+                    "relevance_score": qual.relevance_score,
+                    "evidence": qual.evidence,
+                    "years_experience": qual.years_experience
+                }
+                for qual in qualifications
+            ]
+        }
+        
+        # Save to JSON
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Saved qualifications to {output_path}")
+        return str(output_path)
+    
+    def _save_matches_to_json(
+        self,
+        matches: List[QualificationMatch],
+        job_description_path: str,
+        output_filename: Optional[str] = None,
+        job_title: Optional[str] = None,
+        company_name: Optional[str] = None
+    ) -> str:
+        """
+        Save qualification matches to JSON file.
+        
+        Args:
+            matches: List of QualificationMatch objects
+            job_description_path: Path to job description file (used for metadata)
+            output_filename: Custom filename (default: qualification_matches.json)
+            job_title: Job title for the position
+            company_name: Company name for the position
+            
+        Returns:
+            Path to saved JSON file
+        """
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate filename if not provided
+        if not output_filename:
+            output_filename = "qualification_matches.json"
+        
+        output_path = self.output_dir / output_filename
+        
+        # Convert matches to dict
+        data = {
+            "metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "job_description_file": job_description_path,
+                "job_title": job_title or "Not specified",
+                "company_name": company_name or "Not specified",
+                "num_matches": len(matches)
+            },
+            "matches": [
+                {
+                    "qualification": {
+                        "text": match.qualification.text,
+                        "type": match.qualification.type.value,
+                        "relevance_score": match.qualification.relevance_score,
+                        "evidence": match.qualification.evidence,
+                        "years_experience": match.qualification.years_experience
+                    },
+                    "job_requirement": match.job_requirement,
+                    "match_strength": match.match_strength,
+                    "explanation": match.explanation
+                }
+                for match in matches
+            ]
+        }
+        
+        # Save to JSON
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Saved qualification matches to {output_path}")
+        return str(output_path)
+    
+    def load_qualifications_from_json(self, json_path: str) -> List[Qualification]:
+        """
+        Load qualifications from a previously saved JSON file.
+        
+        Args:
+            json_path: Path to JSON file
+            
+        Returns:
+            List of Qualification objects
+        """
+        with open(json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        qualifications = []
+        for qual_data in data.get('qualifications', []):
+            qual_type = QualificationType(qual_data.get('type', 'experience'))
+            
+            qualification = Qualification(
+                text=qual_data.get('text', ''),
+                type=qual_type,
+                relevance_score=float(qual_data.get('relevance_score', 0)),
+                evidence=qual_data.get('evidence'),
+                years_experience=qual_data.get('years_experience')
+            )
+            qualifications.append(qualification)
+        
+        return qualifications
+    
+    def _extract_job_info(self, job_description: str) -> Dict[str, Optional[str]]:
+        """
+        Extract job title and company name from job description using LLM.
+        
+        Args:
+            job_description: Job description text
+            
+        Returns:
+            Dictionary with 'job_title' and 'company_name' keys
+        """
+        if not self.use_llm or not self.llm_client:
+            return {'job_title': None, 'company_name': None}
+        
+        try:
+            system_prompt = """You are an expert at extracting job information from job descriptions.
+            Extract the job title and company name from the job description.
+            
+            Return ONLY valid JSON in this format:
+            {
+                "job_title": "Exact job title",
+                "company_name": "Company name"
+            }
+            
+            If the information is not found, use null for that field."""
+            
+            prompt = f"""Extract the job title and company name from this job description:
+
+{job_description[:1500]}
+
+Important:
+1. Extract the exact job title (e.g., "Senior Software Engineer", "Data Scientist")
+2. Extract the company name if mentioned
+3. If either is not found, use null
+4. Return as JSON with the specified format."""
+            
+            response = self.llm_client.generate(prompt, system_prompt=system_prompt)
+            
+            # Parse JSON response
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group())
+                return {
+                    'job_title': data.get('job_title'),
+                    'company_name': data.get('company_name')
+                }
+        except Exception as e:
+            logger.warning(f"Failed to extract job info: {e}")
+        
+        return {'job_title': None, 'company_name': None}
     
     def _load_job_description(self, job_description_path: str) -> str:
         """

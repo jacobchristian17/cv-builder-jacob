@@ -13,9 +13,9 @@ from modules.qualifications_extractor import QualificationsExtractor
 
 
 def example_basic_extraction():
-    """Basic qualification extraction example."""
+    """Basic qualification extraction example with auto-save to JSON."""
     print("=" * 60)
-    print("Example 1: Basic Qualification Extraction")
+    print("Example 1: Basic Qualification Extraction (Auto-Save)")
     print("=" * 60)
     
     # Create a sample job description file
@@ -38,7 +38,7 @@ def example_basic_extraction():
         f.write(job_description_content)
     
     try:
-        # Extract qualifications (default: 4)
+        # Extract qualifications (auto-saves to JSON by default)
         extractor = QualificationsExtractor()
         qualifications = extractor.extract_qualifications(job_file_path)
         
@@ -48,6 +48,9 @@ def example_basic_extraction():
         print("\n" + "-" * 40)
         print("Detailed View:")
         print(extractor.format_qualifications_list(qualifications, style="detailed"))
+        
+        print("\n" + "-" * 40)
+        print("✅ Qualifications automatically saved to modules/shared/qualifications/")
     
     finally:
         # Clean up
@@ -202,6 +205,52 @@ def example_ranking():
             os.remove(job_file_path)
 
 
+def example_json_loading():
+    """Example of loading qualifications from saved JSON."""
+    print("\n" + "=" * 60)
+    print("Example 6: Loading Qualifications from JSON")
+    print("=" * 60)
+    
+    # First extract and save
+    job_description_content = """
+    Looking for Python Developer with cloud experience.
+    """
+    
+    job_file_path = "sample_job6.txt"
+    with open(job_file_path, 'w') as f:
+        f.write(job_description_content)
+    
+    try:
+        # Extract with custom filename
+        extractor = QualificationsExtractor()
+        qualifications = extractor.extract_qualifications(
+            job_file_path,
+            output_filename="test_qualifications.json"
+        )
+        
+        print("\nOriginal Qualifications:")
+        print(extractor.format_qualifications_list(qualifications, style="bullet"))
+        
+        # Load from JSON
+        loaded_qualifications = extractor.load_qualifications_from_json(
+            "modules/shared/qualifications/test_qualifications.json"
+        )
+        
+        print("\nLoaded from JSON:")
+        print(extractor.format_qualifications_list(loaded_qualifications, style="bullet"))
+        
+        print("\n✅ Successfully loaded qualifications from JSON")
+    
+    finally:
+        import os
+        if os.path.exists(job_file_path):
+            os.remove(job_file_path)
+        # Clean up test JSON
+        json_path = "modules/shared/qualifications/test_qualifications.json"
+        if os.path.exists(json_path):
+            os.remove(json_path)
+
+
 def run_all_examples():
     """Run all examples."""
     print("QUALIFICATIONS EXTRACTOR MODULE EXAMPLES")
@@ -214,14 +263,20 @@ def run_all_examples():
         print("   Set GROQ_API_KEY for enhanced extraction.")
         print()
     
+    print("\n📝 Note: All extractions automatically save to JSON in")
+    print("   modules/shared/qualifications/ for pipeline integration.")
+    print()
+    
     example_basic_extraction()
     example_custom_number()
     example_qualification_matching()
     example_summary_generation()
     example_ranking()
+    example_json_loading()
     
     print("\n" + "=" * 60)
     print("All examples completed!")
+    print("Check modules/shared/qualifications/ for saved JSON files.")
     print("=" * 60)
 
 

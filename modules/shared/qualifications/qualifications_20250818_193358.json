@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "timestamp": "2025-08-18T19:33:58.668059",
+    "job_description_file": "job.txt",
+    "num_qualifications": 4
+  },
+  "qualifications": [
+    {
+      "text": "5+ years of software development experience with expertise in building scalable web applications and integrating AI/ML features",
+      "type": "experience",
+      "relevance_score": 95.0,
+      "evidence": "Shipped 1 new AI Chatbot & 20+ features to a proprietary platform app used by individuals and teams worldwide",
+      "years_experience": 5
+    },
+    {
+      "text": "Strong proficiency in Python programming and experience with Node.js and Express",
+      "type": "technical_skill",
+      "relevance_score": 90.0,
+      "evidence": "Developed Check Request System for Finance dept. processing 500+ transactions monthly for cash advances and cheque processing",
+      "years_experience": 2
+    },
+    {
+      "text": "Experience with cloud platforms (AWS, Azure) and containerization (Docker)",
+      "type": "experience",
+      "relevance_score": 85.0,
+      "evidence": "Deployed 4 production applications using Docker containerization and Azure cloud infrastructure",
+      "years_experience": 2
+    },
+    {
+      "text": "Knowledge of React and experience with implementing AI/ML features into existing products",
+      "type": "technical_skill",
+      "relevance_score": 80.0,
+      "evidence": "Shipped 1 new AI Chatbot & 20+ features to a proprietary platform app used by individuals and teams worldwide",
+      "years_experience": 2
+    }
+  ]
+}

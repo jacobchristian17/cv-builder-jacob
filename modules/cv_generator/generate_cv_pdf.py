@@ -37,11 +37,30 @@ class CVPDFGenerator:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in {self.data_file}: {e}")
     
-    def create_html_with_data(self, data):
-        """Create a complete HTML file with embedded JSON data"""
+    def load_qualifications_data(self):
+        """Load qualifications data from JSON file if available"""
+        qualifications_file = Path("../shared/qualifications/qualifications.json")
+        try:
+            with open(qualifications_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return {
+                    'job_title': data.get('metadata', {}).get('job_title', 'Not specified'),
+                    'company_name': data.get('metadata', {}).get('company_name', 'Not specified'),
+                    'qualifications': data.get('qualifications', [])
+                }
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Return None if file doesn't exist or is invalid
+            return None
+    
+    def create_html_with_data(self, data, qualifications_data=None):
+        """Create a complete HTML file with embedded JSON data and qualifications"""
         # Read the original template
         with open(self.template_file, 'r', encoding='utf-8') as f:
             template_content = f.read()
+        
+        # Add qualifications to data if available
+        if qualifications_data:
+            data['target_position'] = qualifications_data
         
         # Create a modified version that embeds the JSON data
         # Replace the fetch call with embedded data
@@ -136,6 +155,14 @@ class CVPDFGenerator:
         print("📄 Loading personal data...")
         data = self.load_personal_data()
         
+        # Load qualifications if available
+        print("🎯 Loading qualifications data...")
+        qualifications_data = self.load_qualifications_data()
+        if qualifications_data:
+            print(f"   Found qualifications for: {qualifications_data['job_title']} at {qualifications_data['company_name']}")
+        else:
+            print("   No qualifications file found (optional)")
+        
         # Generate filename
         if custom_filename:
             output_filename = custom_filename
@@ -150,7 +177,7 @@ class CVPDFGenerator:
         
         # Create HTML with embedded data
         print("🔧 Processing HTML template...")
-        html_content = self.create_html_with_data(data)
+        html_content = self.create_html_with_data(data, qualifications_data)
         
         # Generate PDF
         print("📋 Generating PDF...")

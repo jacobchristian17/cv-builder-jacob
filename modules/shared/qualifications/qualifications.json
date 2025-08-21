@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "timestamp": "2025-08-21T21:00:18.623274",
+    "job_description_file": "job.txt",
+    "job_title": "Frontend Engineer",
+    "company_name": "Makro PRO",
+    "num_qualifications": 4
+  },
+  "qualifications": [
+    {
+      "text": "Expert in building modern JavaScript-based applications in React, React Native, and Node.js",
+      "type": "technical_skill",
+      "relevance_score": 95.0,
+      "evidence": "Shipped 1 new AI Chatbot & 20+ features to a proprietary platform app used by individuals and teams worldwide (AI/UX Developer at Seven Seven Global Services Inc.)",
+      "years_experience": 5
+    },
+    {
+      "text": "Proficient in HTML, CSS/LESS/SCSS, JavaScript, ES6+, and responsive design",
+      "type": "technical_skill",
+      "relevance_score": 90.0,
+      "evidence": "Built 4+ e-commerce websites with modern parallax design with SEO (Full Stack Developer at Freelance Clients)",
+      "years_experience": 2
+    },
+    {
+      "text": "Experience with nest.js, GraphQL, and AWS",
+      "type": "technical_skill",
+      "relevance_score": 85.0,
+      "evidence": "Deployed 4 production applications using Docker containerization and Azure cloud infrastructure (MERN Stack Developer at Vertere Global Solutions Inc.)",
+      "years_experience": 1
+    },
+    {
+      "text": "Strong understanding of distributed architecture and RESTful APIs",
+      "type": "domain_knowledge",
+      "relevance_score": 80.0,
+      "evidence": "Integrated 4 frontend APIs in response to proprietary LLM secure endpoint access (AI/UX Developer at Seven Seven Global Services Inc.)",
+      "years_experience": 1
+    }
+  ]
+}
