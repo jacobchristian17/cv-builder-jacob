@@ -7,6 +7,25 @@
     <title id="document-title">Professional CV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Metric highlighting styles */
+        .metric {
+            font-weight: 600;
+            color: #0369a1; /* sky-700 */
+            /* background: linear-gradient(to right, #f0f9ff, #e0f2fe); sky-50 to sky-100 */
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        
+        @media print {
+            .metric {
+                font-weight: 600 !important;
+                color: #0369a1 !important;
+                /* background: #f0f9ff !important; */
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+        }
+        
         @media print {
             .no-print {
                 display: none !important;
@@ -392,6 +411,15 @@
     </div>
 
     <script>
+        // Function to highlight metrics in single quotes
+        function highlightMetrics(text) {
+            if (!text) return text;
+            
+            // Replace text within single quotes with span wrapped version
+            // Pattern matches text between single quotes
+            return text.replace(/'([^']*)'/g, '<span class="metric">$1</span>');
+        }
+        
         // Function to load and populate CV data
         async function loadCVData() {
             try {
@@ -469,7 +497,7 @@
 
             // Work Info
             const workInfo = data.work_info;
-            document.getElementById('summary').textContent = workInfo.summary;
+            document.getElementById('summary').innerHTML = highlightMetrics(workInfo.summary);
 
             // Target Position (if available)
             if (data.target_position) {
@@ -497,7 +525,7 @@
                         qualEl.className = 'qualification-item';
                         qualEl.innerHTML = `
                             <span class="qualification-bullet">•</span>
-                            <span class="text-gray-700 text-sm leading-snug">${qual.text}</span>
+                            <span class="text-gray-700 text-sm leading-snug">${highlightMetrics(qual.text)}</span>
                         `;
                         qualificationsEl.appendChild(qualEl);
                     });
@@ -522,7 +550,7 @@
                     </div>
                     <ul class="features mt-3 space-y-1">
                         ${job.features.map(feature => `
-                            <li class="text-gray-700 text-xs"> <span class="text-sky-600">•</span> ${feature}</li>
+                            <li class="text-gray-700 text-xs"> <span class="text-sky-600">•</span> ${highlightMetrics(feature)}</li>
                         `).join('')}
                     </ul>
                 `;
@@ -590,7 +618,7 @@
                 interestEl.className = `interest-item-${index} mb-4`;
                 interestEl.innerHTML = `
                     <h4 class="title text-sm font-semibold text-gray-800 mb-2">${interest.title}</h4>
-                    <p class="content text-gray-600 text-xs leading-relaxed text-justify">${interest.content}</p>
+                    <p class="content text-gray-600 text-xs leading-relaxed text-justify">${highlightMetrics(interest.content)}</p>
                 `;
                 interestsEl.appendChild(interestEl);
             });

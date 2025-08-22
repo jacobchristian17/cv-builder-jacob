@@ -22,7 +22,7 @@
         }
     },
     "work_info": {
-        "summary": "Software Engineer with 5+ years of experience building fast-moving, AI-driven web applications for global enterprises and cross-border teams. Specialized in shipping scalable React + Node.js platforms with integrated ML/AI features, modern UI/UX, and rapid deployment pipelines (Firebase, AWS). Proven ability to deliver features from concept to launch, collaborate async across time zones, and iterate quickly in fast-paced product environments.",
+        "summary": "Software Engineer with '5+ years' of experience building fast-moving, AI-driven web applications for global enterprises and cross-border teams. Specialized in shipping scalable React + Node.js platforms with integrated ML/AI features, modern UI/UX, and rapid deployment pipelines (Firebase, AWS). Proven ability to deliver features from concept to launch, collaborate async across time zones, and iterate quickly in fast-paced product environments.",
         "experience": [
             {
                 "role": "AI/UX Developer",
@@ -30,12 +30,12 @@
                 "location": "(US Fortune 500) — Pasig, NCR",
                 "period": "Aug 2024 - Aug 2025",
                 "features": [
-                    "Shipped 1 new AI Chatbot & 20+ features to a proprietary platform app used by individuals and teams worldwide",
-                    "Integrated 4 frontend APIs in response to proprietary LLM secure endpoint access",
+                    "Shipped '1 new AI Chatbot & 20+ features' to a proprietary platform app used by individuals and teams worldwide",
+                    "Integrated '4 frontend APIs' in response to proprietary LLM secure endpoint access",
                     "Collaborated with 5+ ML Engineers & Data Scientists to deploy LLM solutions",
                     "Collaborated with 3+ UX designers for frontend design & implementation",
-                    "Implemented 20+ automated UI testing suites with Playwright, reducing QA cycles by 70%",
-                    "Participated in code reviews maintaining >90% code quality standards"
+                    "Implemented '20+ automated UI testing suites' with Playwright, 'reducing QA cycles by 70%'",
+                    "Participated in code reviews maintaining '>90% code quality standards'"
                 ]
             },
             {
@@ -44,10 +44,10 @@
                 "location": "(AU/CA) — Makati, NCR",
                 "period": "May 2023 - Aug 2024",
                 "features": [
-                    "Developed CMS frontend components improving usability of 15+ content authors for company website management",
-                    "Led Angular Ionic upgrade from v12 to v18 for cross-platform Health & Safety mobile app for iOS and Android users",
-                    "Built reusable components library with Storybook, improving development efficiency by 30%",
-                    "Automated testing with Selenium, reducing manual testing time by 30%"
+                    "Built '10+ CMS frontend components' improving usability of content authors for company website management",
+                    "'Led Angular Ionic upgrade from v12 to v18' for cross-platform Health & Safety mobile app for iOS and Android users",
+                    "Developed '4+ reusable components' with React memoization, improving loading performance by 30%",
+                    "Implemented '10+ automated testing' with Selenium, reducing manual testing cycles by 50%"
                 ]
             },
             {
@@ -56,10 +56,10 @@
                 "location": "San Juan, NCR",
                 "period": "June 2022 - April 2023",
                 "features": [
-                    "Developed Check Request System for Finance dept. processing 500+ transactions monthly for cash advances and cheque processing",
-                    "Profit & Loss Dashboard for Financial operations, used for expense management",
-                    "Deployed 4 production applications using Docker containerization and Azure cloud infrastructure",
-                    "Implemented HTTPS security protocols and maintained Linux-based server instances with 99.9% uptime"
+                    "Developed 'Check Request System' for Finance dept. processing 500+ transactions monthly for cash advances and cheque processing",
+                    "'Profit & Loss Dashboard' for Financial operations, used for expense management",
+                    "Deployed '4 production applications' using Docker containerization and Azure cloud infrastructure",
+                    "Implemented HTTPS security protocols and maintained Linux-based server instances with '99.9% uptime'"
                 ]
             },
             {
@@ -68,9 +68,9 @@
                 "location": "(GL) — Mandaluyong, NCR",
                 "period": "March 2020 - April 2022",
                 "features": [
-                    "Delivered 4+ e-commerce websites with modern parallax design with SEO",
-                    "Published with 72.5% On-page score for Accelerate International Logistics",
-                    "Provided live coding tutorials to US-based clients, maintaining 100% client satisfaction",
+                    "Delivered '4+ e-commerce websites' with modern parallax design with SEO",
+                    "Published with '72.5% On-page' score for Accelerate International Logistics",
+                    "Provided live coding tutorials to US-based clients",
                     "Built tutorial platform user management system for academic institution"
                 ]
             }
