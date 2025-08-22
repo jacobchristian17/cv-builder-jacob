@@ -185,9 +185,10 @@
                 padding: 4pt !important;
             }
 
-            /* Page break controls */
+            /* Enhanced page break controls */
             .personal_info {
-                page-break-after: avoid;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
                 margin-bottom: 4pt !important;
             }
 
@@ -203,29 +204,92 @@
             }
 
             .work_info {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
                 margin-top: 2pt !important;
             }
 
             .skills {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+                page-break-before: auto !important;
             }
 
             .education {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+                page-break-before: auto !important;
             }
 
             .certifications {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+                page-break-before: auto !important;
             }
 
             .other {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+                page-break-before: auto !important;
             }
 
             .experience-item {
-                page-break-inside: avoid;
-                margin-bottom: 4pt !important;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+                margin-bottom: 6pt !important;
+                orphans: 2;
+                widows: 2;
+            }
+
+            /* Prevent breaks within experience content */
+            .experience-item .flex {
+                page-break-inside: avoid !important;
+            }
+
+            .experience-item .features {
+                page-break-inside: avoid !important;
+                page-break-before: avoid !important;
+            }
+
+            .experience-item ul {
+                page-break-inside: avoid !important;
+            }
+
+            .experience-item li {
+                page-break-inside: avoid !important;
+                orphans: 2;
+                widows: 2;
+            }
+
+            /* Section headers should stick with content */
+            h2.experience-title,
+            h2.skills-title,
+            h2.education-title,
+            h2.certifications-title,
+            h2.interests-title {
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+                orphans: 3;
+                widows: 3;
+            }
+
+            /* Ensure minimum content after headers */
+            .experience-title + .experience {
+                page-break-before: avoid !important;
+            }
+
+            .skills-title + .grid {
+                page-break-before: avoid !important;
+            }
+
+            /* Specific experience section controls */
+            #experience-list {
+                page-break-inside: auto !important;
+            }
+
+            /* Keep first experience item with header */
+            .experience-item:first-child {
+                page-break-before: avoid !important;
+            }
+
+            /* Allow natural breaks between experience items if needed */
+            .experience-item:not(:first-child) {
+                page-break-before: auto !important;
             }
 
             /* Target position section styles */
@@ -296,6 +360,26 @@
                 box-shadow: none !important;
                 animation: none !important;
                 transition: none !important;
+            }
+
+            /* Global page break improvements */
+            body {
+                orphans: 3 !important;
+                widows: 3 !important;
+            }
+
+            #cv-container {
+                page-break-before: avoid !important;
+            }
+
+            /* Ensure sections don't break awkwardly */
+            section {
+                page-break-inside: avoid !important;
+            }
+
+            /* Exception for work experience which might be long */
+            section.work_info {
+                page-break-inside: auto !important;
             }
         }
 
@@ -536,7 +620,7 @@
             const experienceList = document.getElementById('experience-list');
             workInfo.experience.forEach((job, index) => {
                 const jobEl = document.createElement('div');
-                jobEl.className = `experience-item-${index} rounded-lg`;
+                jobEl.className = `experience-item experience-item-${index} rounded-lg`;
                 jobEl.innerHTML = `
                     <div class="flex flex-row justify-between items-start mb-2">
                         <div>
