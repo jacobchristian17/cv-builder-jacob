@@ -134,25 +134,51 @@ class ResumeParser:
         return contact_info
     
     def _extract_skills(self, text: str) -> list:
-        """Extract skills from resume text."""
-        # This is a simplified implementation
-        # In production, you'd use NLP libraries and skill databases
+        """Extract skills from resume text using comprehensive skill database."""
+        # Use skill categorizer to get comprehensive skill lists
+        all_hard_skills = self.skill_categorizer.hard_skills
+        all_soft_skills = self.skill_categorizer.soft_skills
         
-        skill_keywords = [
-            'Python', 'Java', 'JavaScript', 'C++', 'SQL', 'React', 'Angular',
-            'Django', 'Flask', 'Spring', 'Node.js', 'AWS', 'Azure', 'GCP',
-            'Docker', 'Kubernetes', 'Git', 'Machine Learning', 'Data Analysis',
-            'Project Management', 'Agile', 'Scrum', 'Leadership', 'Communication'
-        ]
+        # Combine all skills for comprehensive extraction
+        all_skills = all_hard_skills + all_soft_skills
         
         found_skills = []
         text_lower = text.lower()
         
-        for skill in skill_keywords:
-            if skill.lower() in text_lower:
+        # Check each skill with word boundaries for accurate matching
+        for skill in all_skills:
+            if self.skill_categorizer._skill_in_text(skill, text_lower):
                 found_skills.append(skill)
         
-        return found_skills
+        # Also check for skill variations and common abbreviations
+        skill_variations = {
+            'JavaScript': ['JS', 'ECMAScript'],
+            'TypeScript': ['TS'],
+            'React': ['ReactJS', 'React.js'],
+            'Angular': ['AngularJS'],
+            'Node.js': ['NodeJS', 'Node'],
+            'HTML': ['HTML5'],
+            'CSS': ['CSS3'],
+            'AWS': ['Amazon Web Services'],
+            'GCP': ['Google Cloud Platform', 'Google Cloud'],
+            'Machine Learning': ['ML'],
+            'Artificial Intelligence': ['AI'],
+            'REST API': ['RESTful API', 'REST APIs'],
+            'GraphQL': ['Graph QL'],
+            'Docker': ['Containerization'],
+            'Kubernetes': ['K8s'],
+            'CI/CD': ['Continuous Integration', 'Continuous Deployment'],
+        }
+        
+        # Check variations
+        for main_skill, variations in skill_variations.items():
+            for variation in variations:
+                if self.skill_categorizer._skill_in_text(variation, text_lower):
+                    if main_skill not in found_skills:
+                        found_skills.append(main_skill)
+        
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(found_skills))
     
     def _extract_experience(self, text: str) -> list:
         """Extract work experience from resume text."""

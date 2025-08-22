@@ -136,9 +136,18 @@ async def run_workflow(job_file):
         # Score the generated CV against the job description
         print(f"🔍 Scoring {custom_filename} against {job_file}")
         
-        # Load CV text (this might need adjustment based on ATS checker implementation)
-        # For now, we'll score based on the personal info and qualifications
-        resume_data = personal_data
+        # Parse the generated PDF to extract resume data for scoring
+        from modules.ats_checker.ats_scorer.parsers.resume_parser import ResumeParser
+        
+        pdf_path = pdf_output_dir / custom_filename
+        resume_parser = ResumeParser()
+        
+        try:
+            resume_data = resume_parser.parse(str(pdf_path))
+            print(f"📄 Resume parsed: {len(resume_data.get('skills', []))} skills, {len(resume_data.get('hard_skills', []))} hard skills")
+        except Exception as parse_error:
+            print(f"⚠️  Failed to parse PDF, using personal data: {parse_error}")
+            resume_data = personal_data
         
         with open(job_file, 'r') as f:
             job_description = f.read()
@@ -163,6 +172,46 @@ async def run_workflow(job_file):
         print(f"   • Education: {score_result.education_score}%")
         print(f"   • Formatting: {score_result.formatting_score}%")
         
+        # Display missing items if any
+        feedback = score_result.detailed_feedback
+        missing_keywords = feedback.get('missing_keywords', [])
+        missing_skills = feedback.get('missing_skills', [])
+        missing_hard_skills = feedback.get('missing_hard_skills', [])
+        missing_soft_skills = feedback.get('missing_soft_skills', [])
+        
+        if missing_keywords or missing_skills or missing_hard_skills or missing_soft_skills:
+            print(f"\n❌ Missing Items:")
+            
+            if missing_keywords:
+                print(f"   🔑 Missing Keywords ({len(missing_keywords)}):")
+                for keyword in missing_keywords[:10]:  # Show first 10
+                    print(f"      - {keyword}")
+                if len(missing_keywords) > 10:
+                    print(f"      ... and {len(missing_keywords) - 10} more")
+            
+            if missing_hard_skills:
+                print(f"   🔧 Missing Hard Skills ({len(missing_hard_skills)}):")
+                for skill in missing_hard_skills[:8]:  # Show first 8
+                    print(f"      - {skill}")
+                if len(missing_hard_skills) > 8:
+                    print(f"      ... and {len(missing_hard_skills) - 8} more")
+            
+            if missing_soft_skills:
+                print(f"   🤝 Missing Soft Skills ({len(missing_soft_skills)}):")
+                for skill in missing_soft_skills[:8]:  # Show first 8
+                    print(f"      - {skill}")
+                if len(missing_soft_skills) > 8:
+                    print(f"      ... and {len(missing_soft_skills) - 8} more")
+            
+            if missing_skills:
+                print(f"   📋 Missing General Skills ({len(missing_skills)}):")
+                for skill in missing_skills[:5]:  # Show first 5
+                    print(f"      - {skill}")
+                if len(missing_skills) > 5:
+                    print(f"      ... and {len(missing_skills) - 5} more")
+        else:
+            print(f"\n✅ No missing keywords or skills detected!")
+        
         # Save score report to output/scores directory
         score_filename = custom_filename.replace('.pdf', '_score_report.json')
         score_path = scores_output_dir / score_filename
@@ -178,6 +227,12 @@ async def run_workflow(job_file):
                 'experience_score': score_result.experience_score,
                 'education_score': score_result.education_score,
                 'formatting_score': score_result.formatting_score
+            },
+            'missing_items': {
+                'missing_keywords': feedback.get('missing_keywords', []),
+                'missing_skills': feedback.get('missing_skills', []),
+                'missing_hard_skills': feedback.get('missing_hard_skills', []),
+                'missing_soft_skills': feedback.get('missing_soft_skills', [])
             },
             'detailed_feedback': score_result.detailed_feedback,
             'recommendations': score_result.recommendations

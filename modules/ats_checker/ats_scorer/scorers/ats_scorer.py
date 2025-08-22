@@ -61,9 +61,9 @@ class ATSScorer:
         
         # Calculate weighted overall score with updated weights
         weights = {
-            'keywords': 0.25,
-            'hard_skills': 0.20,
-            'soft_skills': 0.15,
+            'keywords': 0.1,
+            'hard_skills': 0.30,
+            'soft_skills': 0.20,
             'job_title': 0.10,
             'experience': 0.20,
             'education': 0.05,
@@ -475,10 +475,54 @@ class ATSScorer:
         
         # Keep original missing_skills for backward compatibility
         all_required_skills = job_data.get('required_skills', [])
-        all_resume_skills = set([s.lower() for s in resume_data.get('skills', [])])
+        all_resume_skills = set([s.lower().strip() for s in resume_data.get('skills', [])])
+        
+        # Also include hard and soft skills in the search
+        all_resume_skills.update([s.lower().strip() for s in resume_data.get('hard_skills', [])])
+        all_resume_skills.update([s.lower().strip() for s in resume_data.get('soft_skills', [])])
         
         for skill in all_required_skills:
-            if skill.lower() not in all_resume_skills:
+            skill_lower = skill.lower().strip()
+            skill_found = False
+            
+            # Check exact match first
+            if skill_lower in all_resume_skills:
+                skill_found = True
+            else:
+                # Check for partial matches and variations
+                for resume_skill in all_resume_skills:
+                    # Check if job skill is contained in resume skill or vice versa
+                    if (skill_lower in resume_skill or resume_skill in skill_lower) and len(skill_lower) > 2:
+                        skill_found = True
+                        break
+                    
+                    # Check common variations
+                    skill_variations = {
+                        'javascript': ['js', 'ecmascript'],
+                        'typescript': ['ts'],
+                        'react': ['reactjs', 'react.js'],
+                        'angular': ['angularjs'],
+                        'node.js': ['nodejs', 'node'],
+                        'html': ['html5'],
+                        'css': ['css3'],
+                        'aws': ['amazon web services'],
+                        'machine learning': ['ml'],
+                        'artificial intelligence': ['ai'],
+                    }
+                    
+                    # Check if either skill matches a variation
+                    for main_skill, variations in skill_variations.items():
+                        if skill_lower == main_skill and resume_skill in variations:
+                            skill_found = True
+                            break
+                        if resume_skill == main_skill and skill_lower in variations:
+                            skill_found = True
+                            break
+                    
+                    if skill_found:
+                        break
+            
+            if not skill_found:
                 feedback['missing_skills'].append(skill)
         
         return feedback

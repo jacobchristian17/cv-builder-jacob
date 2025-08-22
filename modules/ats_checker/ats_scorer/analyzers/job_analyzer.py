@@ -70,19 +70,23 @@ class JobAnalyzer:
     
     def _extract_required_skills(self, text: str) -> List[str]:
         """Extract required skills from job description."""
-        # Use the skill categorizer to extract actual technical keywords
+        # Use the skill categorizer to extract actual technical keywords from entire text
         categorized_skills = self.skill_categorizer.extract_categorized_skills_from_text(text)
         
         # Look for sections that indicate requirements and extract keywords from them
         required_patterns = [
-            r'required skills?:?(.*?)(?:preferred|desired|nice to have|\n\n)',
-            r'must have:?(.*?)(?:preferred|desired|nice to have|\n\n)',
-            r'requirements?:?(.*?)(?:preferred|desired|nice to have|\n\n)',
-            r'qualifications?:?(.*?)(?:preferred|desired|nice to have|\n\n)',
+            r'required skills?:?(.*?)(?:preferred|desired|nice to have|responsibilities|\n\s*\n)',
+            r'must have:?(.*?)(?:preferred|desired|nice to have|responsibilities|\n\s*\n)',
+            r'requirements?:?(.*?)(?:preferred|desired|nice to have|responsibilities|\n\s*\n)',
+            r'qualifications?:?(.*?)(?:preferred|desired|nice to have|responsibilities|\n\s*\n)',
+            r'essential skills?:?(.*?)(?:preferred|desired|nice to have|responsibilities|\n\s*\n)',
+            r'mandatory:?(.*?)(?:preferred|desired|nice to have|responsibilities|\n\s*\n)',
         ]
         
         required_section_skills = []
         text_lower = text.lower()
+        
+        # Extract from specific requirement sections
         for pattern in required_patterns:
             matches = re.findall(pattern, text_lower, re.DOTALL | re.IGNORECASE)
             for match in matches:
@@ -91,17 +95,34 @@ class JobAnalyzer:
                 required_section_skills.extend(section_skills['hard_skills'])
                 required_section_skills.extend(section_skills['soft_skills'])
         
-        # Combine all skills found
-        all_skills = (categorized_skills['hard_skills'] + 
-                     categorized_skills['soft_skills'] + 
-                     required_section_skills)
+        # Also look for skills mentioned with strong requirement indicators
+        requirement_indicators = [
+            r'you (?:must|should|need to) (?:have|know|understand|be proficient in|be experienced with)(.*?)(?:\.|,|\n)',
+            r'(?:proficiency|experience|expertise) (?:in|with|using)(.*?)(?:\.|,|\n)',
+            r'(?:strong|solid|deep) (?:knowledge|understanding|experience) (?:of|in|with)(.*?)(?:\.|,|\n)',
+            r'(?:minimum|at least) \d+ years? (?:of )?(?:experience|expertise) (?:in|with|using)(.*?)(?:\.|,|\n)',
+        ]
         
-        # Remove duplicates while preserving order
+        indicator_skills = []
+        for pattern in requirement_indicators:
+            matches = re.findall(pattern, text_lower, re.IGNORECASE)
+            for match in matches:
+                section_skills = self.skill_categorizer.extract_categorized_skills_from_text(match)
+                indicator_skills.extend(section_skills['hard_skills'])
+                indicator_skills.extend(section_skills['soft_skills'])
+        
+        # Combine all skills found, prioritizing those from requirement sections
+        all_skills = (required_section_skills + 
+                     indicator_skills +
+                     categorized_skills['hard_skills'] + 
+                     categorized_skills['soft_skills'])
+        
+        # Remove duplicates while preserving order (requirement section skills first)
         seen = set()
         unique_skills = []
         for skill in all_skills:
-            if skill.lower() not in seen:
-                seen.add(skill.lower())
+            if skill.lower().strip() not in seen:
+                seen.add(skill.lower().strip())
                 unique_skills.append(skill)
         
         return unique_skills

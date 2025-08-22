@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-08-21T22:23:36.611708",
+    "timestamp": "2025-08-22T09:37:42.556845",
     "job_description_file": "job.txt",
     "job_title": "Frontend Engineer",
     "company_name": "Makro PRO",
@@ -8,32 +8,32 @@
   },
   "qualifications": [
     {
-      "text": "5+ years of professional experience",
-      "type": "experience",
+      "text": "Expertise in building modern JavaScript-based applications in React Native",
+      "type": "technical_skill",
+      "relevance_score": 95.0,
+      "evidence": "AI/UX Developer at Seven Seven Global Services Inc. - Shipped 1 new AI Chatbot & 20+ features to a proprietary platform app used by individuals and teams worldwide",
+      "years_experience": 1
+    },
+    {
+      "text": "Proficient in HTML, CSS/LESS/SCSS, JavaScript, ES6+, and responsive design",
+      "type": "technical_skill",
+      "relevance_score": 90.0,
+      "evidence": "UI/UX Developer at GHD Pty, Ltd. - Developed CMS frontend components improving usability of 15+ content authors for company website management",
+      "years_experience": 1
+    },
+    {
+      "text": "Experience with nest.js, GraphQL, and AWS",
+      "type": "technical_skill",
+      "relevance_score": 85.0,
+      "evidence": "MERN Stack Developer at Vertere Global Solutions Inc. - Deployed 4 production applications using Docker containerization and Azure cloud infrastructure",
+      "years_experience": 1
+    },
+    {
+      "text": "Strong understanding of distributed architecture and usage of RESTful APIs",
+      "type": "domain_knowledge",
       "relevance_score": 80.0,
-      "evidence": null,
-      "years_experience": 5
-    },
-    {
-      "text": "Bachelor in of Science in Computer Engineering\nMapua University",
-      "type": "education",
-      "relevance_score": 75.0,
-      "evidence": null,
-      "years_experience": null
-    },
-    {
-      "text": "Proficient in React",
-      "type": "technical_skill",
-      "relevance_score": 70.0,
-      "evidence": null,
-      "years_experience": null
-    },
-    {
-      "text": "Proficient in Aws",
-      "type": "technical_skill",
-      "relevance_score": 70.0,
-      "evidence": null,
-      "years_experience": null
+      "evidence": "Full Stack Developer at Freelance Clients - Published with 72.5% On-page score for Accelerate International Logistics",
+      "years_experience": 2
     }
   ]
 }
