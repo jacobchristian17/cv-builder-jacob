@@ -109,17 +109,23 @@ class QualificationsExtractor:
         
         try:
             system_prompt = """You are an expert recruiter extracting the most relevant qualifications from a resume for a specific job.
-            Focus on qualifications that directly match the job requirements.
-            Consider technical skills, experience, education, certifications, and achievements.
+            
+            IMPORTANT GUIDELINES:
+            - Extract qualifications that directly match job requirements
+            - DO NOT copy exact phrases from the professional summary
+            - Synthesize information from experience, skills, and achievements sections
+            - Create unique, specific qualifications tailored to the job
+            - Focus on concrete skills, technologies, and quantifiable achievements
+            - Avoid generic or vague statements
             
             Return ONLY valid JSON in this format:
             {
                 "qualifications": [
                     {
-                        "text": "Concise qualification statement",
+                        "text": "Specific, unique qualification statement (not copied from summary)",
                         "type": "technical_skill|soft_skill|experience|education|certification|achievement|domain_knowledge",
                         "relevance_score": 85,
-                        "evidence": "Supporting text from resume",
+                        "evidence": "Supporting text from resume (work experience, skills, or achievements)",
                         "years_experience": 5
                     }
                 ]
@@ -133,12 +139,25 @@ JOB DESCRIPTION:
 RESUME:
 {resume_text[:3000]}
 
-Requirements:
+CRITICAL REQUIREMENTS:
 1. Extract EXACTLY {num_quals} qualifications
 2. Order by relevance to the job (most relevant first)
-3. Make each qualification concise but specific
-4. Include evidence from the resume
-5. Score relevance 0-100
+3. DO NOT copy exact phrases from the professional summary - rephrase and synthesize information
+4. Focus on specific skills, technologies, achievements, and quantifiable experience
+5. Each qualification should be unique and tailored to job requirements
+6. Include specific evidence from work experience, skills, or achievements sections
+7. Avoid generic statements - be specific about technologies, frameworks, years of experience
+8. Score relevance 0-100 based on job match
+
+EXAMPLES OF GOOD QUALIFICATIONS:
+- "Expert in React ecosystem with 5+ years building production applications"
+- "Led cross-functional teams of 8+ developers delivering enterprise software solutions"
+- "Proven track record deploying scalable microservices architecture on AWS"
+
+AVOID:
+- Copying sentences directly from professional summary
+- Generic statements like "experienced software engineer"
+- Vague qualifications without specific details
 
 Return as JSON with the specified format."""
             
