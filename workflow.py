@@ -3,12 +3,13 @@
 Complete ATS CV Generation and Scoring Workflow
 
 WORKFLOW:
-1. Extract qualifications from job.txt using qualifications_extractor module
-2. Generate CV with cv_generator module (custom naming and root save)
+1. Extract qualifications from job description using qualifications_extractor module
+2. Generate CV with cv_generator module (custom naming and organized output)
 3. Score the generated CV with ats_checker module
 
 Usage:
-    python workflow.py job.txt
+    python workflow.py                    # Uses job.txt by default
+    python workflow.py custom_job.txt     # Uses specific job file
 """
 
 import sys
@@ -263,14 +264,17 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python workflow.py job.txt                    # Full workflow
-  python workflow.py senior_dev_job.txt         # With specific job file
+  python workflow.py                            # Full workflow (uses job.txt)
+  python workflow.py                            # Default behavior
+  python workflow.py custom_job.txt             # With specific job file
         """
     )
     
     parser.add_argument(
         'job_file',
-        help='Path to job description text file'
+        nargs='?',
+        default='job.txt',
+        help='Path to job description text file (default: job.txt)'
     )
     
     parser.add_argument(

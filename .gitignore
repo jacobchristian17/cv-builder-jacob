@@ -151,6 +151,7 @@ results/
 *.docx
 *.doc
 *.txt
+data/qualifications.json
 
 # Keep sample files
 !data/sample_*
