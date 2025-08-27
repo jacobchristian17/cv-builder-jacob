@@ -38,7 +38,7 @@ def sanitize_filename(text):
     return sanitized.strip()
 
 
-async def run_workflow(job_file):
+async def run_workflow(job_file, no_top=False):
     """Run the complete workflow"""
     
     print("🚀 STARTING ATS CV WORKFLOW")
@@ -51,37 +51,59 @@ async def run_workflow(job_file):
     scores_output_dir.mkdir(parents=True, exist_ok=True)
     print(f"📁 Created output directories: {pdf_output_dir}, {scores_output_dir}")
     
-    # Step 1: Extract Qualifications
-    print("\n📋 STEP 1: EXTRACTING QUALIFICATIONS")
-    print("-" * 40)
-    
-    try:
-        extractor = QualificationsExtractor(num_qualifications=4)
-        print(f"📄 Processing job description: {job_file}")
+    # Step 1: Extract Qualifications (skip if --no-top is used)
+    if not no_top:
+        print("\n📋 STEP 1: EXTRACTING QUALIFICATIONS")
+        print("-" * 40)
         
-        # Extract qualifications (auto-saves to qualifications.json)
-        qualifications = extractor.extract_qualifications(job_file)
-        print(f"✅ Extracted {len(qualifications)} qualifications")
-        
-        # Load saved data to get job info
-        quals_file = Path("modules/shared/qualifications/qualifications.json")
-        if quals_file.exists():
-            with open(quals_file, 'r') as f:
-                quals_data = json.load(f)
+        try:
+            extractor = QualificationsExtractor(num_qualifications=4)
+            print(f"📄 Processing job description: {job_file}")
             
-            job_title = quals_data['metadata'].get('job_title', 'Unknown')
-            company_name = quals_data['metadata'].get('company_name', 'Unknown')
+            # Extract qualifications (auto-saves to qualifications.json)
+            qualifications = extractor.extract_qualifications(job_file)
+            print(f"✅ Extracted {len(qualifications)} qualifications")
             
-            print(f"🎯 Job Title: {job_title}")
-            print(f"🏢 Company: {company_name}")
-            
-        else:
-            print("❌ Error: Qualifications file not found")
+            # Load saved data to get job info
+            quals_file = Path("modules/shared/qualifications/qualifications.json")
+            if quals_file.exists():
+                with open(quals_file, 'r', encoding='utf-8') as f:
+                    quals_data = json.load(f)
+                
+                job_title = quals_data['metadata'].get('job_title', 'Unknown')
+                company_name = quals_data['metadata'].get('company_name', 'Unknown')
+                
+                print(f"🎯 Job Title: {job_title}")
+                print(f"🏢 Company: {company_name}")
+                
+            else:
+                print("❌ Error: Qualifications file not found")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error in qualifications extraction: {e}")
             return False
-            
-    except Exception as e:
-        print(f"❌ Error in qualifications extraction: {e}")
-        return False
+    else:
+        print("\n⏭️  SKIPPING QUALIFICATIONS EXTRACTION (--no-top mode)")
+        print("-" * 40)
+        
+        # Create empty qualifications file for PDF generation
+        quals_data = {
+            "qualifications": [],
+            "metadata": {
+                "job_title": "Not specified",
+                "company_name": "Not specified"
+            }
+        }
+        
+        quals_file = Path("modules/shared/qualifications/qualifications.json")
+        quals_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(quals_file, 'w', encoding='utf-8') as f:
+            json.dump(quals_data, f, indent=2)
+        
+        job_title = "Not specified"
+        company_name = "Not specified"
+        print("✅ Created empty qualifications file for PDF generation")
     
     # Step 2: Generate CV
     print("\n📄 STEP 2: GENERATING CV")
@@ -89,7 +111,7 @@ async def run_workflow(job_file):
     
     try:
         # Load personal info to get person name
-        with open("modules/shared/data/personal_info.json", 'r') as f:
+        with open("modules/shared/data/personal_info.json", 'r', encoding='utf-8') as f:
             personal_data = json.load(f)
         
         person_name = personal_data['personal_info'].get('name', 'Unknown')
@@ -150,7 +172,7 @@ async def run_workflow(job_file):
             print(f"⚠️  Failed to parse PDF, using personal data: {parse_error}")
             resume_data = personal_data
         
-        with open(job_file, 'r') as f:
+        with open(job_file, 'r', encoding='utf-8') as f:
             job_description = f.read()
         
         # First need to analyze the job description to get job_data
@@ -265,8 +287,9 @@ async def main():
         epilog="""
 Examples:
   python workflow.py                            # Full workflow (uses job.txt)
-  python workflow.py                            # Default behavior
+  python workflow.py --no-top                   # Skip qualifications extraction
   python workflow.py custom_job.txt             # With specific job file
+  python workflow.py custom_job.txt --no-top    # Custom job file, no qualifications
         """
     )
     
@@ -283,6 +306,12 @@ Examples:
         help='Show detailed information'
     )
     
+    parser.add_argument(
+        '--no-top',
+        action='store_true',
+        help='Skip qualifications extractor and leave that section blank in PDF'
+    )
+    
     args = parser.parse_args()
     
     # Check if job file exists
@@ -291,7 +320,7 @@ Examples:
         sys.exit(1)
     
     try:
-        success = await run_workflow(args.job_file)
+        success = await run_workflow(args.job_file, no_top=args.no_top)
         
         if success:
             print("\n💡 Next steps:")

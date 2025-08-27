@@ -15,17 +15,34 @@ Requirements:
 import json
 import os
 import asyncio
+import re
 from pathlib import Path
 from playwright.async_api import async_playwright
 from jinja2 import Template
 from datetime import datetime
 
 class CVPDFGenerator:
-    def __init__(self, data_file="../shared/data/personal_info.json", template_file="ats_cv_template.html"):
+    def __init__(self, data_file="../shared/data/personal_info.json", template_file="ats_cv_template.html", output_dir=None):
         self.data_file = Path(data_file)
         self.template_file = Path(template_file)
-        self.output_dir = Path("output")
-        self.output_dir.mkdir(exist_ok=True)
+        # Use provided output_dir or default to organized structure
+        if output_dir:
+            self.output_dir = Path(output_dir)
+        else:
+            # Default to root output/pdf directory when run standalone
+            self.output_dir = Path("../../output/pdf") if Path("../../output").exists() else Path("output")
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+    
+    def sanitize_filename(self, text):
+        """Convert text to safe filename format"""
+        if not text or text == 'Not specified':
+            return 'Unknown'
+        
+        # Remove special characters
+        sanitized = re.sub(r'[<>:"/\\|?*]', '', text)
+        # Remove extra spaces but keep single spaces
+        sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+        return sanitized
     
     def load_personal_data(self):
         """Load personal information from JSON file"""
@@ -208,11 +225,21 @@ class CVPDFGenerator:
         if custom_filename:
             output_filename = custom_filename
         else:
-            name = data.get('personal_info', {}).get('name', 'CV')
-            safe_name = "".join(c for c in name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-            safe_name = safe_name.replace(' ', '_')
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            output_filename = f"generated_cv.pdf"
+            # Generate filename in format: {JobTitle}_{CompanyName}_{PersonName}.pdf
+            person_name = data.get('personal_info', {}).get('name', 'Unknown')
+            
+            if qualifications_data:
+                job_title = self.sanitize_filename(qualifications_data.get('job_title', 'Position'))
+                company_name = self.sanitize_filename(qualifications_data.get('company_name', 'Company'))
+                # Remove spaces from job title and company for consistency
+                job_title = job_title.replace(' ', '')
+                company_name = company_name.replace(' ', '')
+                output_filename = f"{job_title}_{company_name}_{person_name}.pdf"
+            else:
+                # Fallback to simple format if no qualifications
+                safe_name = self.sanitize_filename(person_name)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                output_filename = f"{safe_name}_CV_{timestamp}.pdf"
         
         output_path = self.output_dir / output_filename
         
@@ -230,7 +257,12 @@ class CVPDFGenerator:
         
         print(f"✅ PDF generated successfully!")
         print(f"📁 Output location: {output_path.absolute()}")
+        print(f"📄 Filename: {output_filename}")
         print(f"📊 File size: {len(pdf_buffer):,} bytes")
+        
+        # Print job/company info if available
+        if qualifications_data:
+            print(f"🎯 Tailored for: {qualifications_data['job_title']} at {qualifications_data['company_name']}")
         
         return output_path
 
@@ -240,16 +272,18 @@ async def main():
     
     parser = argparse.ArgumentParser(description='Generate PDF from ATS CV template')
     parser.add_argument('--data', '-d', default='../shared/data/personal_info.json', 
-                       help='Path to personal_info.json file (default: data/personal_info.json)')
+                       help='Path to personal_info.json file (default: ../shared/data/personal_info.json)')
     parser.add_argument('--template', '-t', default='ats_cv_template.html',
                        help='Path to HTML template file (default: ats_cv_template.html)')
     parser.add_argument('--output', '-o', 
-                       help='Custom output filename (default: auto-generated)')
+                       help='Custom output filename (default: auto-generated based on job/company/person)')
+    parser.add_argument('--output-dir', 
+                       help='Output directory path (default: ../../output/pdf or ./output)')
     
     args = parser.parse_args()
     
     try:
-        generator = CVPDFGenerator(args.data, args.template)
+        generator = CVPDFGenerator(args.data, args.template, args.output_dir)
         output_path = await generator.run(args.output)
         
         print(f"\n🎉 Success! Your CV PDF has been generated:")

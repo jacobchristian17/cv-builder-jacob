@@ -187,7 +187,7 @@ def test_job_analyzer(job_file):
         from modules.ats_checker.ats_scorer.analyzers.job_analyzer import JobAnalyzer
         
         # Read job description
-        with open(job_file, 'r') as f:
+        with open(job_file, 'r', encoding='utf-8') as f:
             job_text = f.read()
         
         analyzer = JobAnalyzer()

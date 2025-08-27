@@ -110,13 +110,23 @@ class QualificationsExtractor:
         try:
             system_prompt = """You are an expert recruiter extracting the most relevant qualifications from a resume for a specific job.
             
-            IMPORTANT GUIDELINES:
+            CRITICAL GUIDELINES TO PREVENT REPETITION:
             - Extract qualifications that directly match job requirements
+            - EACH qualification MUST come from a DIFFERENT project, role, or skill area
+            - DO NOT repeat similar projects or achievements across multiple qualifications
             - DO NOT copy exact phrases from the professional summary
-            - Synthesize information from experience, skills, and achievements sections
+            - Diversify: Pull from different companies, roles, or time periods in the experience
             - Create unique, specific qualifications tailored to the job
             - Focus on concrete skills, technologies, and quantifiable achievements
-            - Avoid generic or vague statements
+            - NEVER use generic phrases like "proficient in", "skilled in", "experienced with"
+            - NEVER write "high proficiency" or similar generic proficiency statements
+            - Include specific context, projects, or achievements with each skill
+            - Combine skills with their practical application or impact
+            
+            DIVERSITY REQUIREMENTS:
+            - If extracting from work experience, use different companies or roles
+            - If extracting technical achievements, choose from different technology stacks
+            - Mix qualification types: technical achievements, leadership, process improvements, etc.
             
             Return ONLY valid JSON in this format:
             {
@@ -139,25 +149,35 @@ JOB DESCRIPTION:
 RESUME:
 {resume_text[:3000]}
 
-CRITICAL REQUIREMENTS:
-1. Extract EXACTLY {num_quals} qualifications
-2. Order by relevance to the job (most relevant first)
-3. DO NOT copy exact phrases from the professional summary - rephrase and synthesize information
-4. Focus on specific skills, technologies, achievements, and quantifiable experience
-5. Each qualification should be unique and tailored to job requirements
-6. Include specific evidence from work experience, skills, or achievements sections
-7. Avoid generic statements - be specific about technologies, frameworks, years of experience
+CRITICAL REQUIREMENTS TO PREVENT REPETITION:
+1. Extract EXACTLY {num_quals} qualifications from DIFFERENT areas of experience
+2. MANDATORY: Each qualification MUST come from a DIFFERENT project/role/company
+3. DO NOT repeat similar bullet points (e.g., if you mention "GenAI Chatbot" once, don't mention it again)
+4. DO NOT copy exact phrases from the professional summary - rephrase and synthesize
+5. Diversify across: different companies, different time periods, different technology areas
+6. Mix types: combine technical achievements, leadership examples, process improvements
+7. Be specific about technologies, frameworks, metrics, and impact
 8. Score relevance 0-100 based on job match
 
-EXAMPLES OF GOOD QUALIFICATIONS:
-- "Expert in React ecosystem with 5+ years building production applications"
-- "Led cross-functional teams of 8+ developers delivering enterprise software solutions"
-- "Proven track record deploying scalable microservices architecture on AWS"
+DIVERSITY CHECKLIST (ensure variety):
+☐ Different companies or roles
+☐ Different technology stacks or domains
+☐ Different types of achievements (technical, leadership, process)
+☐ Different time periods in career
+☐ Different skill categories
 
-AVOID:
-- Copying sentences directly from professional summary
-- Generic statements like "experienced software engineer"
-- Vague qualifications without specific details
+EXAMPLES OF GOOD DIVERSE QUALIFICATIONS:
+- "Built and maintained 10+ production React applications serving 100K+ daily users at Company A"
+- "Led migration of monolithic Java system to microservices architecture at Company B"
+- "Established code review process that improved team velocity by 30% at Company C"
+- "Achieved AWS Solutions Architect certification and redesigned cloud infrastructure"
+- "Mentored 5 junior developers and established onboarding program"
+
+EXAMPLES OF REPETITIVE QUALIFICATIONS TO AVOID:
+- Multiple bullets about the same project (e.g., "Built chatbot..." and "Integrated chatbot APIs...")
+- Multiple bullets about similar technologies without different context
+- Repeating the same achievement with slightly different wording
+- Generic statements without specific context
 
 Return as JSON with the specified format."""
             
@@ -297,6 +317,16 @@ Return as JSON with the specified format."""
             system_prompt = """You are an expert recruiter matching candidate qualifications to job requirements.
             Analyze how well each qualification meets specific job requirements.
             
+            CRITICAL: Each qualification MUST be from a DIFFERENT project, role, or skill area.
+            DO NOT repeat similar achievements or projects across qualifications.
+            Avoid generic phrases like "proficient in", "skilled in", "experienced with".
+            Create specific, contextual qualifications that demonstrate practical application.
+            
+            DIVERSITY REQUIREMENTS:
+            - Pull from different companies or roles in the experience
+            - Use different technology areas or skill domains
+            - Mix achievement types (technical, leadership, process improvements)
+            
             Return ONLY valid JSON in this format:
             {
                 "matches": [
@@ -323,11 +353,20 @@ JOB DESCRIPTION:
 RESUME:
 {resume_text[:3000]}
 
-Instructions:
-1. Extract {num_quals} most relevant qualifications
-2. Match each to a specific job requirement
-3. Explain the match strength
-4. Order by relevance
+Instructions for DIVERSE QUALIFICATIONS:
+1. Extract {num_quals} qualifications from DIFFERENT projects/roles/companies
+2. MANDATORY: No two qualifications should reference the same project or achievement
+3. Match each to a specific job requirement
+4. Diversify: Mix technical skills, leadership, process improvements, different time periods
+5. NEVER use generic phrases like "proficient in" or "high proficiency"
+6. Include specific projects, metrics, or practical applications
+7. If you mention a project once (e.g., "GenAI Chatbot"), don't reference it again
+
+DIVERSITY CHECKLIST:
+- Are qualifications from different roles or companies? ✓
+- Do they cover different technology areas? ✓
+- Is there a mix of technical and soft skills? ✓
+- Are different time periods represented? ✓
 
 Return as JSON with the specified format."""
             
@@ -520,8 +559,25 @@ Requirements:
         found_skills = [skill for skill in skill_keywords if skill in common_skills]
         
         for skill in found_skills[:2]:  # Add top 2 skills
+            # Create more specific qualification text
+            skill_name = skill.capitalize()
+            if skill in ['python', 'java', 'javascript', 'react', 'node']:
+                text = f"Development experience with {skill_name} in production environments"
+            elif skill in ['docker', 'kubernetes']:
+                text = f"Container orchestration and deployment using {skill_name}"
+            elif skill in ['aws', 'azure']:
+                text = f"Cloud infrastructure implementation on {skill_name}"
+            elif skill in ['sql']:
+                text = f"Database design and optimization using {skill_name}"
+            elif skill in ['api']:
+                text = f"RESTful {skill_name} design and integration"
+            elif skill in ['agile', 'scrum']:
+                text = f"{skill_name} methodology practitioner in software development"
+            else:
+                text = f"Applied experience with {skill_name} technologies"
+            
             qualifications.append(Qualification(
-                text=f"Proficient in {skill.capitalize()}",
+                text=text,
                 type=QualificationType.TECHNICAL_SKILL,
                 relevance_score=70.0
             ))

@@ -10,12 +10,13 @@
         /* Metric highlighting styles */
         .metric {
             font-weight: 600;
-            color: #0369a1; /* sky-700 */
+            color: #0369a1;
+            /* sky-700 */
             /* background: linear-gradient(to right, #f0f9ff, #e0f2fe); sky-50 to sky-100 */
             padding: 0 2px;
             border-radius: 2px;
         }
-        
+
         @media print {
             .metric {
                 font-weight: 600 !important;
@@ -25,11 +26,8 @@
                 color-adjust: exact !important;
             }
         }
-        
+
         @media print {
-            .no-print {
-                display: none !important;
-            }
 
             /* Print page setup */
             @page {
@@ -269,11 +267,11 @@
             }
 
             /* Ensure minimum content after headers */
-            .experience-title + .experience {
+            .experience-title+.experience {
                 page-break-before: avoid !important;
             }
 
-            .skills-title + .grid {
+            .skills-title+.grid {
                 page-break-before: avoid !important;
             }
 
@@ -381,10 +379,18 @@
             section.work_info {
                 page-break-inside: auto !important;
             }
+
+            .no-print {
+                display: none !important;
+            }
         }
 
         .skill-category {
             page-break-inside: avoid;
+        }
+
+        .no-print {
+            display: none !important;
         }
     </style>
 </head>
@@ -416,7 +422,7 @@
         </header>
 
         <!-- Target Position Qualifications Section -->
-        <section id="target-position-section" class="target-position mb-2 hidden">
+        <section id="target-position-section" class="target-position mb-2 no-print">
             <div class="bg-gradient-to-r from-sky-50 to-blue-50 p-3 rounded-lg border border-sky-200">
                 <div class="mb-1">
                     <div id="target-job-title" class="text-sm font-semibold text-sky-800 mb-1"></div>
@@ -498,12 +504,12 @@
         // Function to highlight metrics in single quotes
         function highlightMetrics(text) {
             if (!text) return text;
-            
+
             // Replace text within single quotes with span wrapped version
             // Pattern matches text between single quotes
             return text.replace(/'([^']*)'/g, '<span class="metric">$1</span>');
         }
-        
+
         // Function to load and populate CV data
         async function loadCVData() {
             try {
@@ -590,7 +596,7 @@
                 const qualificationsEl = document.getElementById('target-qualifications');
 
                 // Show the section
-                targetSection.classList.remove('hidden');
+                targetSection.classList.remove('no-print');
 
                 // Populate job title and company
                 if (data.target_position.job_title && data.target_position.job_title !== 'Not specified') {
