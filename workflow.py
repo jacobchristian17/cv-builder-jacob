@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from modules.qualifications_extractor import QualificationsExtractor
 from modules.cv_generator.generate_cv_pdf import CVPDFGenerator
+from modules.cover_letter_generator import CoverLetterGenerator
 
 
 def sanitize_filename(text):
@@ -38,7 +39,7 @@ def sanitize_filename(text):
     return sanitized.strip()
 
 
-async def run_workflow(job_file, no_top=False):
+async def run_workflow(job_file, no_top=False, no_cover_letter=False):
     """Run the complete workflow"""
     
     print("🚀 STARTING ATS CV WORKFLOW")
@@ -47,9 +48,11 @@ async def run_workflow(job_file, no_top=False):
     # Create output directories
     pdf_output_dir = Path("output/pdf")
     scores_output_dir = Path("output/scores")
+    cover_letter_dir = Path("output/cover_letters")
     pdf_output_dir.mkdir(parents=True, exist_ok=True)
     scores_output_dir.mkdir(parents=True, exist_ok=True)
-    print(f"📁 Created output directories: {pdf_output_dir}, {scores_output_dir}")
+    cover_letter_dir.mkdir(parents=True, exist_ok=True)
+    print(f"📁 Created output directories: {pdf_output_dir}, {scores_output_dir}, {cover_letter_dir}")
     
     # Step 1: Extract Qualifications (skip if --no-top is used)
     if not no_top:
@@ -145,8 +148,56 @@ async def run_workflow(job_file, no_top=False):
         print(f"❌ Error in CV generation: {e}")
         return False
     
-    # Step 3: Score CV with ATS Checker
-    print("\n📊 STEP 3: SCORING CV WITH ATS CHECKER")
+    # Step 3: Generate Cover Letter (skip if --no-cover-letter is used)
+    cover_letter_path = None
+    if not no_cover_letter:
+        print("\n✉️ STEP 3: GENERATING COVER LETTER")
+        print("-" * 40)
+        
+        try:
+            # Initialize cover letter generator
+            cover_generator = CoverLetterGenerator(
+                output_dir=cover_letter_dir
+            )
+            
+            # Extract company info if available
+            company_info = None
+            if company_name and company_name != 'Not specified':
+                company_info = {
+                    'name': company_name,
+                    'address_line1': '',
+                    'address_line2': '',
+                    'city_state_zip': ''
+                }
+            
+            # Generate cover letter filename
+            cover_letter_filename = f"CoverLetter_{safe_job_title}_{safe_company}_{safe_person}.pdf"
+            
+            print(f"📝 Generating personalized cover letter...")
+            print(f"📁 Cover letter filename: {cover_letter_filename}")
+            
+            # Generate cover letter
+            cover_letter_path = await cover_generator.generate(
+                job_description_path=job_file,
+                personal_info_path="modules/shared/data/personal_info.json",
+                qualifications_path="modules/shared/qualifications/qualifications.json",
+                company_info=company_info,
+                custom_filename=cover_letter_filename
+            )
+            
+            print(f"✅ Cover letter generated successfully!")
+            print(f"📁 Saved to: {cover_letter_path}")
+            
+        except Exception as e:
+            print(f"⚠️ Warning: Cover letter generation failed: {e}")
+            print("   Continuing with workflow...")
+            cover_letter_path = None
+    else:
+        print("\n⏭️ SKIPPING COVER LETTER GENERATION (--no-cover-letter mode)")
+        print("-" * 40)
+    
+    # Step 4: Score CV with ATS Checker
+    print("\n📊 STEP 4: SCORING CV WITH ATS CHECKER")
     print("-" * 40)
     
     try:
@@ -274,6 +325,8 @@ async def run_workflow(job_file, no_top=False):
     print("\n🎉 WORKFLOW COMPLETED SUCCESSFULLY!")
     print("=" * 60)
     print(f"📄 CV Generated: output/pdf/{custom_filename}")
+    if cover_letter_path:
+        print(f"✉️ Cover Letter: {cover_letter_path}")
     print(f"📊 Score Report: output/scores/{score_filename}")
     print("=" * 60)
     
@@ -288,8 +341,10 @@ async def main():
 Examples:
   python workflow.py                            # Full workflow (uses job.txt)
   python workflow.py --no-top                   # Skip qualifications extraction
+  python workflow.py --no-cover-letter          # Skip cover letter generation
   python workflow.py custom_job.txt             # With specific job file
   python workflow.py custom_job.txt --no-top    # Custom job file, no qualifications
+  python workflow.py --no-top --no-cover-letter # CV only, no extras
         """
     )
     
@@ -312,6 +367,12 @@ Examples:
         help='Skip qualifications extractor and leave that section blank in PDF'
     )
     
+    parser.add_argument(
+        '--no-cover-letter',
+        action='store_true',
+        help='Skip cover letter generation'
+    )
+    
     args = parser.parse_args()
     
     # Check if job file exists
@@ -320,7 +381,11 @@ Examples:
         sys.exit(1)
     
     try:
-        success = await run_workflow(args.job_file, no_top=args.no_top)
+        success = await run_workflow(
+            args.job_file, 
+            no_top=args.no_top, 
+            no_cover_letter=args.no_cover_letter
+        )
         
         if success:
             print("\n💡 Next steps:")

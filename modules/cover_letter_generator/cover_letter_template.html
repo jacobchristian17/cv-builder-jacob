@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Letter</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 1in;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Garamond', 'EB Garamond', 'Adobe Garamond', 'Garamond Pro', Georgia, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000;
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 1in;
+        }
+
+        /* Header Section */
+        .header {
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .header h1 {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .contact-info {
+            font-size: 12pt;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .contact-info a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        /* Company Address */
+        .company-address {
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .company-address .company-name {
+            font-weight: bold;
+        }
+
+        /* Salutation */
+        .salutation {
+            margin-bottom: 20px;
+        }
+
+        /* Body Paragraphs */
+        .body-content {
+            text-align: justify;
+        }
+
+        .body-content p {
+            margin-bottom: 15px;
+            text-indent: 0;
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 25px;
+            margin-bottom: 60px;
+        }
+
+        /* Signature */
+        .signature {
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .signature-image {
+            width: 120px;
+            height: auto;
+            margin-bottom: 5px;
+            position: absolute;
+            top: -20px;
+
+        }
+
+        .signature-line {
+            width: 250px;
+            border-bottom: 1px solid #000;
+            margin-bottom: 5px;
+            display: none; /* Hidden when signature image is present */
+        }
+
+        .signature-name {
+            font-weight: normal;
+        }
+
+        /* Print optimizations */
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+
+            .header,
+            .company-address,
+            .body-content,
+            .closing,
+            .signature {
+                page-break-inside: avoid;
+            }
+
+            /* Ensure proper spacing for print */
+            .body-content p {
+                orphans: 3;
+                widows: 3;
+            }
+        }
+
+        /* Responsive adjustments for preview */
+        @media screen and (max-width: 900px) {
+            body {
+                padding: 20px;
+                font-size: 11pt;
+            }
+
+            .header h1 {
+                font-size: 14pt;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header with Name and Contact -->
+    <div class="header">
+        <h1 id="applicant-name">Your Name</h1>
+        <div class="contact-info" id="contact-info">your.email@example.com | (555) 123-4567</div>
+    </div>
+
+    <!-- Company Address -->
+    <div class="company-address" id="company-address">
+        <div class="company-name">Company Name</div>
+        <div>Address Line 1</div>
+        <div>City, State ZIP</div>
+    </div>
+
+    <!-- Salutation -->
+    <div class="salutation" id="salutation">Dear Hiring Manager,</div>
+
+    <!-- Body Content -->
+    <div class="body-content" id="body-content">
+        <p>This is a fallback paragraph in case JavaScript doesn't execute properly. The actual content should be
+            populated dynamically.</p>
+        <p>Second fallback paragraph.</p>
+        <p>Third fallback paragraph.</p>
+        <p>Fourth fallback paragraph.</p>
+    </div>
+
+    <!-- Closing -->
+    <div class="closing" id="closing">Thank you and best regards,</div>
+
+    <!-- Signature -->
+    <div class="signature">
+        <img src="../../shared/data/signature.png" alt="Signature" class="signature-image" id="signature-image">
+        <div class="signature-line"></div>
+        <div class="signature-name" id="signature-name">Your Name</div>
+    </div>
+
+    <script>
+        // Function to populate cover letter data
+        function populateCoverLetter(data) {
+            try {
+                console.log('populateCoverLetter called with data:', data);
+
+                // Applicant information
+                const applicantName = document.getElementById('applicant-name');
+                const contactInfo = document.getElementById('contact-info');
+                const signatureName = document.getElementById('signature-name');
+
+                console.log('Found elements:', {
+                    applicantName: !!applicantName,
+                    contactInfo: !!contactInfo,
+                    signatureName: !!signatureName
+                });
+
+                if (data && data.personal_info) {
+                    try {
+                        const info = data.personal_info;
+                        console.log('Personal info:', info);
+
+                        if (applicantName && info.name) {
+                            applicantName.textContent = info.name;
+                            console.log('Set applicant name to:', info.name);
+                        }
+
+                        // Format contact info with error handling
+                        const contacts = [];
+                        try {
+                            if (info.mobile) contacts.push(info.mobile);
+                            if (info.email) contacts.push(info.email);
+                            if (info.website) {
+                                // Handle website as string or object
+                                const websiteUrl = typeof info.website === 'string' ? info.website :
+                                    (info.website && info.website.url ? info.website.url : '');
+                                if (websiteUrl && typeof websiteUrl === 'string') {
+                                    contacts.push(`<a href="${websiteUrl}">${websiteUrl.replace(/^https?:\/\//, '')}</a>`);
+                                }
+                            }
+                        } catch (contactError) {
+                            console.log('Error processing contact info:', contactError);
+                        }
+
+                        if (contactInfo && contacts.length > 0) {
+                            contactInfo.innerHTML = contacts.join(' | ');
+                            console.log('Set contact info to:', contacts.join(' | '));
+                        }
+
+                        if (signatureName && info.name) {
+                            signatureName.textContent = info.name;
+                            console.log('Set signature name to:', info.name);
+                        }
+                    } catch (personalInfoError) {
+                        console.log('Error processing personal info:', personalInfoError);
+                    }
+                } else {
+                    console.log('No personal_info found in data');
+                }
+
+                // Company information
+                const companyAddress = document.getElementById('company-address');
+                if (data && data.company_info && companyAddress) {
+                    const company = data.company_info;
+                    console.log('Company info:', company);
+
+                    let addressHTML = '';
+
+                    if (company.name) {
+                        addressHTML += `<div class="company-name">${company.name}</div>`;
+                    }
+                    if (company.address_line1) {
+                        addressHTML += `<div>${company.address_line1}</div>`;
+                    }
+                    if (company.address_line2) {
+                        addressHTML += `<div>${company.address_line2}</div>`;
+                    }
+                    if (company.city_state_zip) {
+                        addressHTML += `<div>${company.city_state_zip}</div>`;
+                    }
+
+                    companyAddress.innerHTML = addressHTML;
+                    console.log('Set company address HTML');
+                }
+
+                // Salutation
+                const salutationEl = document.getElementById('salutation');
+                if (data && data.salutation && salutationEl) {
+                    salutationEl.textContent = data.salutation;
+                    console.log('Set salutation to:', data.salutation);
+                }
+
+                // Body paragraphs
+                const bodyContent = document.getElementById('body-content');
+                if (data && data.paragraphs && Array.isArray(data.paragraphs) && bodyContent) {
+                    console.log('Found paragraphs:', data.paragraphs.length);
+                    bodyContent.innerHTML = '';
+                    data.paragraphs.forEach((paragraph, index) => {
+                        const p = document.createElement('p');
+                        p.textContent = paragraph;
+                        bodyContent.appendChild(p);
+                        console.log(`Added paragraph ${index + 1}:`, paragraph.substring(0, 50) + '...');
+                    });
+                } else {
+                    console.log('No paragraphs found or bodyContent element missing');
+                }
+
+                // Closing
+                const closingEl = document.getElementById('closing');
+                if (data && data.closing && closingEl) {
+                    closingEl.textContent = data.closing;
+                    console.log('Set closing to:', data.closing);
+                }
+
+                console.log('populateCoverLetter completed successfully');
+
+            } catch (error) {
+                console.error('Error in populateCoverLetter:', error);
+                console.error('Data received:', data);
+            }
+        }
+
+        // Load data if embedded
+        console.log('Script loaded. Checking for coverLetterData...');
+        if (typeof coverLetterData !== 'undefined') {
+            console.log('coverLetterData found, calling populateCoverLetter');
+            populateCoverLetter(coverLetterData);
+        } else {
+            console.log('coverLetterData is undefined');
+        }
+    </script>
+</body>
+
+</html>
