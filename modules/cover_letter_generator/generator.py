@@ -19,7 +19,8 @@ class CoverLetterGenerator:
         output_dir: str = None,
         use_llm: bool = True,
         temperature: float = 0.7,
-        max_tokens: int = 2500
+        max_tokens: int = 2500,
+        use_web_search: bool = True
     ):
         """
         Initialize the cover letter generator.
@@ -30,6 +31,7 @@ class CoverLetterGenerator:
             use_llm: Whether to use LLM for content generation
             temperature: LLM temperature for generation
             max_tokens: Maximum tokens for LLM response
+            use_web_search: Whether to use web search for company information
         """
         self.output_dir = Path(output_dir or "output/cover_letters")
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -42,7 +44,8 @@ class CoverLetterGenerator:
         self.json_generator = CoverLetterJSONGenerator(
             use_llm=use_llm,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            use_web_search=use_web_search
         )
         
         self.pdf_generator = CoverLetterPDFGenerator(
@@ -160,8 +163,8 @@ class CoverLetterGenerator:
 class JSONOnly:
     """Use only the JSON generator."""
     
-    def __init__(self, use_llm: bool = True, temperature: float = 0.7, max_tokens: int = 2500):
-        self.generator = CoverLetterJSONGenerator(use_llm, temperature, max_tokens)
+    def __init__(self, use_llm: bool = True, temperature: float = 0.7, max_tokens: int = 2500, use_web_search: bool = True):
+        self.generator = CoverLetterJSONGenerator(use_llm, temperature, max_tokens, use_web_search)
     
     def generate_content(self, job_description_path: str, **kwargs) -> Dict:
         """Generate cover letter content as dictionary."""

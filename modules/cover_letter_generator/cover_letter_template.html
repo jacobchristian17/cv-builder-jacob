@@ -57,6 +57,10 @@
             font-size: 11pt;
         }
 
+        .company-address.hidden {
+            display: none;
+        }
+
         .company-address-line {
             font-size: 10pt;
         }
@@ -177,27 +181,17 @@
         // Function to populate cover letter data
         function populateCoverLetter(data) {
             try {
-                console.log('populateCoverLetter called with data:', data);
-
                 // Applicant information
                 const applicantName = document.getElementById('applicant-name');
                 const contactInfo = document.getElementById('contact-info');
                 const signatureName = document.getElementById('signature-name');
 
-                console.log('Found elements:', {
-                    applicantName: !!applicantName,
-                    contactInfo: !!contactInfo,
-                    signatureName: !!signatureName
-                });
-
                 if (data && data.personal_info) {
                     try {
                         const info = data.personal_info;
-                        console.log('Personal info:', info);
 
                         if (applicantName && info.name) {
                             applicantName.textContent = info.name;
-                            console.log('Set applicant name to:', info.name);
                         }
 
                         // Format contact info with error handling
@@ -214,94 +208,91 @@
                                 }
                             }
                         } catch (contactError) {
-                            console.log('Error processing contact info:', contactError);
+                            // Silently handle contact info errors
                         }
 
                         if (contactInfo && contacts.length > 0) {
                             contactInfo.innerHTML = contacts.join(' | ');
-                            console.log('Set contact info to:', contacts.join(' | '));
                         }
 
                         if (signatureName && info.name) {
                             signatureName.textContent = info.name;
-                            console.log('Set signature name to:', info.name);
                         }
                     } catch (personalInfoError) {
-                        console.log('Error processing personal info:', personalInfoError);
+                        // Silently handle personal info errors
                     }
-                } else {
-                    console.log('No personal_info found in data');
                 }
 
                 // Company information
                 const companyAddress = document.getElementById('company-address');
                 if (data && data.company_info && companyAddress) {
                     const company = data.company_info;
-                    console.log('Company info:', company);
 
-                    let addressHTML = '';
+                    // Check if we have a valid company name
+                    const hasValidCompanyName = company.name && 
+                        company.name.trim() !== '' && 
+                        company.name !== 'Company Name' && 
+                        company.name !== '[Company Name]' && 
+                        company.name !== '[Extract from job description]';
 
-                    if (company.name) {
+                    if (hasValidCompanyName) {
+                        let addressHTML = '';
                         addressHTML += `<div class="company-name">${company.name}</div>`;
-                    }
-                    if (company.address_line1) {
-                        addressHTML += `<div>${company.address_line1}</div>`;
-                    }
-                    if (company.address_line2) {
-                        addressHTML += `<div>${company.address_line2}</div>`;
-                    }
-                    if (company.city_state_zip) {
-                        addressHTML += `<div>${company.city_state_zip}</div>`;
-                    }
+                        
+                        if (company.address_line1) {
+                            addressHTML += `<div class="company-address-line">${company.address_line1}</div>`;
+                        }
+                        if (company.address_line2) {
+                            addressHTML += `<div class="company-address-line">${company.address_line2}</div>`;
+                        }
+                        if (company.city_state_zip) {
+                            addressHTML += `<div class="company-address-line">${company.city_state_zip}</div>`;
+                        }
 
-                    companyAddress.innerHTML = addressHTML;
-                    console.log('Set company address HTML');
+                        companyAddress.innerHTML = addressHTML;
+                        companyAddress.classList.remove('hidden');
+                    } else {
+                        // Hide company address section if no valid company name
+                        companyAddress.classList.add('hidden');
+                    }
+                } else {
+                    // Hide company address section if no company info
+                    if (companyAddress) {
+                        companyAddress.classList.add('hidden');
+                    }
                 }
 
                 // Salutation
                 const salutationEl = document.getElementById('salutation');
                 if (data && data.salutation && salutationEl) {
                     salutationEl.textContent = data.salutation;
-                    console.log('Set salutation to:', data.salutation);
                 }
 
                 // Body paragraphs
                 const bodyContent = document.getElementById('body-content');
                 if (data && data.paragraphs && Array.isArray(data.paragraphs) && bodyContent) {
-                    console.log('Found paragraphs:', data.paragraphs.length);
                     bodyContent.innerHTML = '';
                     data.paragraphs.forEach((paragraph, index) => {
                         const p = document.createElement('p');
                         p.textContent = paragraph;
                         bodyContent.appendChild(p);
-                        console.log(`Added paragraph ${index + 1}:`, paragraph.substring(0, 50) + '...');
                     });
-                } else {
-                    console.log('No paragraphs found or bodyContent element missing');
                 }
 
                 // Closing
                 const closingEl = document.getElementById('closing');
                 if (data && data.closing && closingEl) {
                     closingEl.textContent = data.closing;
-                    console.log('Set closing to:', data.closing);
                 }
 
-                console.log('populateCoverLetter completed successfully');
-
             } catch (error) {
-                console.error('Error in populateCoverLetter:', error);
-                console.error('Data received:', data);
+                // Silently handle any errors
             }
         }
 
         // Load data if embedded
-        console.log('Script loaded. Checking for coverLetterData...');
         if (typeof coverLetterData !== 'undefined') {
-            console.log('coverLetterData found, calling populateCoverLetter');
             populateCoverLetter(coverLetterData);
-        } else {
-            console.log('coverLetterData is undefined');
         }
     </script>
 </body>

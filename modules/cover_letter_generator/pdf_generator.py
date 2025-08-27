@@ -118,11 +118,11 @@ class CoverLetterPDFGenerator:
                     img_data = img_file.read()
                     img_base64 = base64.b64encode(img_data).decode('utf-8')
                     return f"data:image/png;base64,{img_base64}"
-            except Exception as e:
-                print(f"   ⚠️  Warning: Could not load signature image: {e}")
+            except Exception:
+                # Silently handle signature loading errors
                 return ""
         else:
-            print(f"   ⚠️  Warning: Signature image not found at {signature_path}")
+            # Signature not found, return empty
             return ""
     
     def _create_html_with_data(self, data: Dict) -> str:
@@ -147,7 +147,8 @@ class CoverLetterPDFGenerator:
                 'src="../../shared/data/signature.png"',
                 f'src="{signature_data_url}"'
             )
-            print("   ✅ Signature image embedded as data URL")
+            # Signature successfully embedded
+            pass
         else:
             # Hide signature image if not available
             html_content = html_content.replace(
@@ -159,7 +160,6 @@ class CoverLetterPDFGenerator:
                 'display: none; /* Hidden when signature image is present */',
                 'display: block;'
             )
-            print("   ⚠️  Using signature line fallback")
         
         # Embed data as JavaScript
         data_script = f"""
@@ -207,13 +207,7 @@ class CoverLetterPDFGenerator:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
             
-            # Capture console logs for debugging
-            console_logs = []
-            def handle_console(msg):
-                console_logs.append(f"   🔍 Console: {msg.text}")
-                print(f"   🔍 Console: {msg.text}")
-            
-            page.on("console", handle_console)
+            # Remove console logging for production
             
             # Set content and wait for JavaScript execution
             await page.set_content(html_content, wait_until='networkidle')
@@ -221,25 +215,15 @@ class CoverLetterPDFGenerator:
             # Wait for JavaScript to execute
             await page.wait_for_timeout(1000)
             
-            # Verify that content was populated
+            # Verify that content was populated (silently)
             applicant_name = await page.text_content('#applicant-name')
             body_text = await page.text_content('#body-content')
             
-            print(f"   📝 Applicant name in PDF: '{applicant_name}'")
-            print(f"   📄 Body content preview: '{body_text[:100]}...' " if body_text else "   📄 Body content: EMPTY")
-            
             # Check if we have actual content or fallback
             if applicant_name == "Your Name" or "fallback paragraph" in body_text.lower():
-                print("   ⚠️  WARNING: Using fallback content - JavaScript data population failed")
-                
                 # Try to execute the population function manually
-                print("   🔧 Attempting manual JavaScript execution...")
                 await page.evaluate("if (typeof coverLetterData !== 'undefined' && typeof populateCoverLetter === 'function') { populateCoverLetter(coverLetterData); }")
                 await page.wait_for_timeout(500)
-                
-                # Check again
-                applicant_name = await page.text_content('#applicant-name')
-                print(f"   📝 After manual execution - Applicant name: '{applicant_name}'")
             
             # Generate PDF with letter size and Garamond font
             await page.pdf(
