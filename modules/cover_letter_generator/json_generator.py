@@ -31,6 +31,8 @@ class CoverLetterJSONGenerator:
             max_tokens: Maximum tokens for LLM response
         """
         self.use_llm = use_llm
+        self.prompt_file = Path(__file__).parent / "prompt.md"
+        
         if self.use_llm:
             try:
                 self.llm_client = GroqClient(
@@ -42,6 +44,65 @@ class CoverLetterJSONGenerator:
                 print(f"Warning: Failed to initialize LLM: {e}")
                 self.use_llm = False
                 self.llm_client = None
+    
+    def _load_prompt_template(self) -> str:
+        """
+        Load the system prompt from prompt.md file.
+        
+        Returns:
+            System prompt string
+        """
+        try:
+            if self.prompt_file.exists():
+                with open(self.prompt_file, 'r', encoding='utf-8') as f:
+                    prompt_content = f.read()
+                
+                # Extract the system prompt section
+                # Look for "## System Prompt:" and get the content until the next ## section
+                lines = prompt_content.split('\n')
+                system_prompt_lines = []
+                in_system_section = False
+                
+                for line in lines:
+                    if line.startswith('## System Prompt:'):
+                        in_system_section = True
+                        continue
+                    elif line.startswith('## ') and in_system_section:
+                        break
+                    elif in_system_section:
+                        system_prompt_lines.append(line)
+                
+                system_prompt = '\n'.join(system_prompt_lines).strip()
+                
+                if system_prompt:
+                    print(f"   📝 Loaded custom prompt from {self.prompt_file}")
+                    return system_prompt
+                else:
+                    print(f"   ⚠️  Warning: Could not parse system prompt from {self.prompt_file}")
+                    
+            else:
+                print(f"   ⚠️  Warning: Prompt file {self.prompt_file} not found")
+                
+        except Exception as e:
+            print(f"   ⚠️  Warning: Error loading prompt file: {e}")
+        
+        # Fallback to default prompt
+        print("   📝 Using fallback system prompt")
+        return """You are a professional cover letter writer creating compelling, personalized cover letters.
+        
+        IMPORTANT GUIDELINES:
+        1. Write in first person, professional tone
+        2. Be specific and reference actual skills/experiences
+        3. Show enthusiasm for the specific company and role
+        4. Keep to 3-4 paragraphs maximum
+        5. Include measurable achievements where possible
+        
+        Return ONLY valid JSON in this format:
+        {
+            "salutation": "Dear [Name/Hiring Manager],",
+            "paragraphs": ["paragraph1", "paragraph2", "paragraph3"],
+            "closing": "Best regards," or "Sincerely,"
+        }"""
     
     def generate_content(
         self,
@@ -143,63 +204,52 @@ class CoverLetterJSONGenerator:
                 exp_summary.append(f"  - {feature}")
         exp_text = "\n".join(exp_summary)
         
-        system_prompt = """You are a professional cover letter writer creating compelling, personalized cover letters.
+        # Load custom system prompt from prompt.md
+        system_prompt = self._load_prompt_template()
         
-        IMPORTANT GUIDELINES:
-        1. Write in first person, professional tone
-        2. Be specific and reference actual skills/experiences
-        3. Show enthusiasm for the specific company and role
-        4. Connect experiences directly to job requirements
-        5. Keep paragraphs concise but impactful
-        6. Avoid generic phrases - be specific
-        7. Generate exactly 4 paragraphs:
-           - Opening: Express interest and briefly state qualifications
-           - Technical fit: Align technical skills with requirements
-           - Experience/achievements: Highlight relevant accomplishments
-           - Closing: Express enthusiasm for company mission and next steps
+        # Add JSON output format instruction to ensure proper response format
+        system_prompt += """
         
         Return ONLY valid JSON in this format:
         {
             "paragraphs": [
                 "First paragraph text...",
                 "Second paragraph text...",
-                "Third paragraph text...",
-                "Fourth paragraph text..."
+                "Third paragraph text..."
             ],
             "salutation": "Dear Hiring Manager," or specific name if known,
-            "closing": "Thank you and best regards," or similar
+            "closing": "Best regards," or "Sincerely,"
         }"""
         
-        prompt = f"""Write a professional cover letter for this position:
+        # Format input according to prompt.md template
+        prompt = f"""
+**CANDIDATE INFORMATION:**
+- Full Name: {person_data.get('name', 'Applicant')}
+- Contact Information: {person_data.get('email', '')} | {person_data.get('mobile', '')} | {person_data.get('website', {}).get('url', '') if isinstance(person_data.get('website'), dict) else person_data.get('website', '')}
+- Years of Experience: {self._extract_years_experience(work_info.get('summary', ''))} years
+- Primary Technical Skills: {self._format_skills_list(skills.get('hard_skills', []))}
+- Notable Achievements: {self._format_achievements(experience)}
+- Leadership Experience: {self._extract_leadership(experience)}
+- Specialized Experience: {self._extract_specialized_skills(skills)}
 
-JOB DESCRIPTION:
-{job_description[:2000]}
+**JOB DETAILS:**
+- Position Title: [Extract from job description]
+- Company Name: {company_info.get('name', '[Company Name]') if company_info else '[Company Name]'}
+- Key Required Technologies: [Extract from job description]
+- Key Responsibilities: [Extract from job description]
+- Team Structure: [Extract from job description if mentioned]
+- Company Values/Culture: [Extract from job description if mentioned]
+- Special Requirements: [Any unique requirements from job description]
 
-APPLICANT INFO:
-Name: {person_data.get('name', 'Applicant')}
-Current Title: {person_data.get('job_title', '')}
-Years of Experience: {self._extract_years_experience(work_info.get('summary', ''))}
+**JOB DESCRIPTION:**
+{job_description[:2500]}
 
-KEY QUALIFICATIONS:
-{qual_text or 'General software development experience'}
+**ADDITIONAL CONTEXT:**
+- Industry: Technology/Software Development
+- Work Environment: [Determine from job description]
+- Specific Interests: Contribution to innovative technology solutions and team collaboration
 
-RELEVANT EXPERIENCE:
-{exp_text}
-
-TECHNICAL SKILLS:
-{self._format_skills(skills.get('hard_skills', []))}
-
-COMPANY INFO:
-{f"Company: {company_info.get('name', 'your company')}" if company_info else 'Company name not specified'}
-{f"Address: {company_info.get('address_line1', '')}" if company_info and company_info.get('address_line1') else ''}
-
-Write a compelling cover letter that:
-1. Opens with enthusiasm for the specific role and company
-2. Demonstrates technical alignment with job requirements
-3. Highlights specific achievements and experience
-4. Closes with genuine interest in the company's mission
-
-Return as JSON with exactly 4 paragraphs."""
+Generate a 3-paragraph cover letter following the structure defined in the system prompt."""
         
         try:
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
@@ -285,6 +335,52 @@ Return as JSON with exactly 4 paragraphs."""
                     break
         
         return company_info
+    
+    def _format_skills_list(self, skill_categories: List[Dict]) -> str:
+        """Format skills as a comma-separated list for the template."""
+        all_skills = []
+        for category in skill_categories:
+            all_skills.extend(category.get('skill_list', []))
+        return ', '.join(all_skills[:10])  # Top 10 most relevant skills
+    
+    def _format_achievements(self, experience: List[Dict]) -> str:
+        """Extract notable achievements with metrics from experience."""
+        achievements = []
+        for exp in experience[:2]:  # Top 2 experiences
+            features = exp.get('features', [])
+            for feature in features[:2]:  # Top 2 features per job
+                if any(char.isdigit() for char in feature):  # Has metrics
+                    achievements.append(feature.strip())
+        return '; '.join(achievements) if achievements else 'Led technical implementations and delivered scalable solutions'
+    
+    def _extract_leadership(self, experience: List[Dict]) -> str:
+        """Extract leadership experiences from work history."""
+        leadership_keywords = ['led', 'managed', 'mentored', 'collaborated', 'guided', 'coordinated', 'reviewed']
+        leadership_items = []
+        
+        for exp in experience:
+            features = exp.get('features', [])
+            for feature in features:
+                if any(keyword in feature.lower() for keyword in leadership_keywords):
+                    leadership_items.append(feature.strip())
+                    if len(leadership_items) >= 3:
+                        break
+            if len(leadership_items) >= 3:
+                break
+        
+        return '; '.join(leadership_items) if leadership_items else 'Cross-functional team collaboration and technical mentorship'
+    
+    def _extract_specialized_skills(self, skills: Dict) -> str:
+        """Extract specialized technical skills and methodologies."""
+        specialized = []
+        
+        # Look for cloud, database, and methodology skills
+        for category in skills.get('hard_skills', []):
+            cat_name = category.get('category', '').lower()
+            if any(keyword in cat_name for keyword in ['cloud', 'backend', 'devops', 'agile']):
+                specialized.extend(category.get('skill_list', []))
+        
+        return ', '.join(specialized[:8]) if specialized else 'Cloud platforms, databases, agile methodologies'
     
     def _extract_years_experience(self, summary: str) -> str:
         """Extract years of experience from summary."""
