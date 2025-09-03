@@ -48,7 +48,7 @@ class QualificationsExtractor:
         if self.use_llm:
             try:
                 self.llm_client = GroqClient(
-                    model="llama3-8b-8192",
+                    model="meta-llama/llama-4-scout-17b-16e-instruct",
                     temperature=temperature,
                     max_tokens=max_tokens
                 )
@@ -59,6 +59,77 @@ class QualificationsExtractor:
                 self.llm_client = None
         else:
             self.llm_client = None
+        
+        # Load prompt file path
+        self.prompt_file = Path(__file__).parent / "prompt.md"
+    
+    def _load_prompt(self) -> str:
+        """
+        Load the entire prompt.md file as the system prompt.
+        
+        Returns:
+            System prompt string
+        """
+        try:
+            if self.prompt_file.exists():
+                with open(self.prompt_file, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                
+                if content:
+                    logger.debug(f"Loaded prompt from {self.prompt_file}")
+                    return content
+                    
+            # Fallback prompt if file doesn't exist or is empty
+            return self._get_fallback_prompt()
+                
+        except Exception as e:
+            logger.warning(f"Error loading prompt from {self.prompt_file}: {e}")
+            return self._get_fallback_prompt()
+    
+    def _get_fallback_prompt(self) -> str:
+        """Get fallback prompt when MD file is not available."""
+        
+        return """# Job Qualification Extraction Prompt
+
+## Task
+Analyze the provided job description and extract the top 4 matching qualifications from the applicant's profile data.
+
+## Input Files
+- **personal_info.json**: Contains the applicant's complete profile including experience, skills, education, and certifications
+- **job.txt**: Contains the job description with requirements and qualifications
+
+## Instructions
+1. Read and analyze both the personal_info.json and job.txt files
+2. Identify the most relevant qualifications from the applicant's profile that match the job requirements
+3. Select the top 4 qualifications that best align with the position
+4. Format each qualification according to the specified output format
+
+## Rules
+- Find exactly 4 qualifications from the applicant's JSON profile
+- Each qualification should be one concise sentence
+- Avoid repeating project details; summarize relevant projects instead of copying content
+- Only use information that exists in the provided JSON data
+- Do not fabricate or add non-existent information
+- Qualification description should not be more than 20 words
+
+## Output Format
+```
+'{qualification_item_1}',
+'{qualification_item_2}',
+'{qualification_item_3}',
+'{qualification_item_4}',
+```
+
+### Example Output:
+```
+'Web Development Experience with React Expertise'
+
+'Production-Grade Application Development & Testing'
+
+'API Integration & Modern Development Practices'
+
+'Computer Engineering Graduate with Strong Technical Foundation'
+```"""
     
     def extract_qualifications(
         self,
@@ -108,110 +179,127 @@ class QualificationsExtractor:
             return self._extract_basic_qualifications(resume_text, job_description, num_quals)
         
         try:
-            system_prompt = """You are an expert recruiter extracting the most relevant qualifications from a resume for a specific job.
+            # Load system prompt from MD file (the entire prompt.md file)
+            system_prompt = self._load_prompt()
             
-            CRITICAL GUIDELINES TO PREVENT REPETITION:
-            - Extract qualifications that directly match job requirements
-            - EACH qualification MUST come from a DIFFERENT project, role, or skill area
-            - DO NOT repeat similar projects or achievements across multiple qualifications
-            - DO NOT copy exact phrases from the professional summary
-            - Diversify: Pull from different companies, roles, or time periods in the experience
-            - Create unique, specific qualifications tailored to the job
-            - Focus on concrete skills, technologies, and quantifiable achievements
-            - NEVER use generic phrases like "proficient in", "skilled in", "experienced with"
-            - NEVER write "high proficiency" or similar generic proficiency statements
-            - Include specific context, projects, or achievements with each skill
-            - Combine skills with their practical application or impact
-            
-            DIVERSITY REQUIREMENTS:
-            - If extracting from work experience, use different companies or roles
-            - If extracting technical achievements, choose from different technology stacks
-            - Mix qualification types: technical achievements, leadership, process improvements, etc.
-            
-            Return ONLY valid JSON in this format:
-            {
-                "qualifications": [
-                    {
-                        "text": "Specific, unique qualification statement (not copied from summary)",
-                        "type": "technical_skill|soft_skill|experience|education|certification|achievement|domain_knowledge",
-                        "relevance_score": 85,
-                        "evidence": "Supporting text from resume (work experience, skills, or achievements)",
-                        "years_experience": 5
-                    }
-                ]
-            }"""
-            
-            prompt = f"""Extract exactly {num_quals} KEY QUALIFICATIONS from this resume that are most relevant to the job description.
+            # Create user prompt with the actual data
+            prompt = f"""Here is the data to analyze:
 
-JOB DESCRIPTION:
-{job_description[:2000]}
+JOB DESCRIPTION (job.txt):
+{job_description[:3000]}
 
-RESUME:
-{resume_text[:3000]}
+APPLICANT PROFILE (personal_info.json):
+{resume_text[:4000]}
 
-CRITICAL REQUIREMENTS TO PREVENT REPETITION:
-1. Extract EXACTLY {num_quals} qualifications from DIFFERENT areas of experience
-2. MANDATORY: Each qualification MUST come from a DIFFERENT project/role/company
-3. DO NOT repeat similar bullet points (e.g., if you mention "GenAI Chatbot" once, don't mention it again)
-4. DO NOT copy exact phrases from the professional summary - rephrase and synthesize
-5. Diversify across: different companies, different time periods, different technology areas
-6. Mix types: combine technical achievements, leadership examples, process improvements
-7. Be specific about technologies, frameworks, metrics, and impact
-8. Score relevance 0-100 based on job match
+Based on the instructions in the system prompt, extract exactly 4 qualifications that best match this job description.
 
-DIVERSITY CHECKLIST (ensure variety):
-☐ Different companies or roles
-☐ Different technology stacks or domains
-☐ Different types of achievements (technical, leadership, process)
-☐ Different time periods in career
-☐ Different skill categories
+Return the output in the exact format specified (4 qualification items, each in single quotes).
 
-EXAMPLES OF GOOD DIVERSE QUALIFICATIONS:
-- "Built and maintained 10+ production React applications serving 100K+ daily users at Company A"
-- "Led migration of monolithic Java system to microservices architecture at Company B"
-- "Established code review process that improved team velocity by 30% at Company C"
-- "Achieved AWS Solutions Architect certification and redesigned cloud infrastructure"
-- "Mentored 5 junior developers and established onboarding program"
+### **OUTPUT FORMAT:**
+```
+'{qualification_item_1}',
+'{qualification_item_2}',
+'{qualification_item_3}',
+'{qualification_item_4}',
+```
 
-EXAMPLES OF REPETITIVE QUALIFICATIONS TO AVOID:
-- Multiple bullets about the same project (e.g., "Built chatbot..." and "Integrated chatbot APIs...")
-- Multiple bullets about similar technologies without different context
-- Repeating the same achievement with slightly different wording
-- Generic statements without specific context
-
-Return as JSON with the specified format."""
+"""
             
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
+            print(">>> LLM CLIENT GENERATE [OK]")
+            print(response)
+            # Parse the response which should be in the format:
+            # 'Qualification Item'
+            qualifications = []
             
-            # Parse JSON response
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
-            if json_match:
-                data = json.loads(json_match.group())
-                qualifications = []
-                
-                for qual_data in data.get('qualifications', [])[:num_quals]:
-                    qual_type = QualificationType(qual_data.get('type', 'experience'))
+            # Log the raw response for debugging
+            logger.debug(f"Raw LLM response: {response[:500]}...")
+            
+            # Try multiple parsing strategies
+            # Strategy 1: Look for pattern: 'Qualification Item' (text within single quotes)
+            pattern = r"'([^']+)'"
+            matches = re.findall(pattern, response)
+            
+            # Filter out empty or invalid matches
+            valid_matches = []
+            for match in matches:
+                cleaned = match.strip()
+                # Skip empty strings, single characters, or strings that are too short
+                if cleaned and len(cleaned) > 5 and not cleaned.startswith('s profile'):
+                    valid_matches.append(cleaned)
+            
+            # Strategy 2: If we don't have enough matches, try looking for numbered lists
+            if len(valid_matches) < num_quals:
+                numbered_pattern = r'^\d+\.\s*(.+)$'
+                numbered_matches = re.findall(numbered_pattern, response, re.MULTILINE)
+                for match in numbered_matches:
+                    cleaned = match.strip().strip("'\"")
+                    if cleaned and len(cleaned) > 5 and cleaned not in valid_matches:
+                        valid_matches.append(cleaned)
+            
+            # Strategy 3: If still not enough, look for bullet points
+            if len(valid_matches) < num_quals:
+                bullet_pattern = r'^[\-\*•]\s*(.+)$'
+                bullet_matches = re.findall(bullet_pattern, response, re.MULTILINE)
+                for match in bullet_matches:
+                    cleaned = match.strip().strip("'\"")
+                    if cleaned and len(cleaned) > 5 and cleaned not in valid_matches:
+                        valid_matches.append(cleaned)
+            
+            # Strategy 4: If still not enough, look for lines that start with capital letters
+            if len(valid_matches) < num_quals:
+                lines = response.split('\n')
+                for line in lines:
+                    cleaned = line.strip().strip("'\"")
+                    if (cleaned and len(cleaned) > 10 and 
+                        cleaned[0].isupper() and 
+                        cleaned not in valid_matches and
+                        not any(cleaned.startswith(x) for x in ['Based on', 'Here', 'The', 'Return', '#', '##'])):
+                        valid_matches.append(cleaned)
+            
+            # Create qualifications from valid matches
+            if valid_matches:
+                for i, qualification_text in enumerate(valid_matches[:num_quals]):
+                    # Additional cleanup
+                    qualification_text = qualification_text.strip()
+                    
+                    # Skip if it's still invalid
+                    if not qualification_text or len(qualification_text) < 5:
+                        continue
+                    
+                    # Determine qualification type based on content
+                    qual_type = self._determine_qualification_type(qualification_text)
                     
                     qualification = Qualification(
-                        text=qual_data.get('text', ''),
+                        text=qualification_text,
                         type=qual_type,
-                        relevance_score=float(qual_data.get('relevance_score', 0)),
-                        evidence=qual_data.get('evidence'),
-                        years_experience=qual_data.get('years_experience')
+                        relevance_score=90.0 - (i * 5),  # Score based on order (90, 85, 80, 75)
+                        evidence=None,  # No separate evidence in simplified format
+                        years_experience=self._extract_years_from_text(qualification_text)
                     )
                     qualifications.append(qualification)
+            
+            # If we still don't have enough qualifications, log a warning
+            if len(qualifications) < num_quals:
+                logger.warning(f"Only extracted {len(qualifications)} qualifications out of {num_quals} requested")
+                logger.debug(f"Response snippet: {response[:200]}...")
                 
-                # Save to JSON if requested
-                if should_save:
-                    self._save_qualifications_to_json(
-                        qualifications, 
-                        job_description_path,
-                        output_filename,
-                        job_title,
-                        company_name
-                    )
-                
-                return qualifications
+                # If we have no qualifications at all, fall back to basic extraction
+                if len(qualifications) == 0:
+                    logger.warning("No qualifications extracted from LLM response, falling back to basic extraction")
+                    return self._extract_basic_qualifications(resume_text, job_description, num_quals)
+            
+            # Save to JSON if requested
+            if should_save and qualifications:
+                self._save_qualifications_to_json(
+                    qualifications, 
+                    job_description_path,
+                    output_filename,
+                    job_title,
+                    company_name
+                )
+            
+            return qualifications if qualifications else self._extract_basic_qualifications(resume_text, job_description, num_quals)
                 
         except Exception as e:
             logger.error(f"LLM extraction failed: {e}")
@@ -314,36 +402,35 @@ Return as JSON with the specified format."""
             return [self._create_basic_match(qual, job_description) for qual in qualifications]
         
         try:
+            # For matching, use a specific prompt instead of the extraction prompt
             system_prompt = """You are an expert recruiter matching candidate qualifications to job requirements.
-            Analyze how well each qualification meets specific job requirements.
+Analyze how well each qualification meets specific job requirements.
+
+CRITICAL: Each qualification MUST be from a DIFFERENT project, role, or skill area.
+DO NOT repeat similar achievements or projects across qualifications.
+Avoid generic phrases like "proficient in", "skilled in", "experienced with".
+Create specific, contextual qualifications that demonstrate practical application."""
             
-            CRITICAL: Each qualification MUST be from a DIFFERENT project, role, or skill area.
-            DO NOT repeat similar achievements or projects across qualifications.
-            Avoid generic phrases like "proficient in", "skilled in", "experienced with".
-            Create specific, contextual qualifications that demonstrate practical application.
+            # Append JSON format requirement
+            system_prompt += """
             
-            DIVERSITY REQUIREMENTS:
-            - Pull from different companies or roles in the experience
-            - Use different technology areas or skill domains
-            - Mix achievement types (technical, leadership, process improvements)
-            
-            Return ONLY valid JSON in this format:
-            {
-                "matches": [
-                    {
-                        "qualification": {
-                            "text": "Qualification statement",
-                            "type": "experience",
-                            "relevance_score": 90,
-                            "evidence": "Supporting text",
-                            "years_experience": 5
-                        },
-                        "job_requirement": "Specific requirement from job description",
-                        "match_strength": "exact|strong|moderate|weak",
-                        "explanation": "Why this qualification matches this requirement"
-                    }
-                ]
-            }"""
+Return ONLY valid JSON in this format:
+{
+    "matches": [
+        {
+            "qualification": {
+                "text": "Qualification statement",
+                "type": "technical_skill|soft_skill|experience|education|certification|achievement|domain_knowledge",
+                "relevance_score": 90,
+                "evidence": "Supporting text",
+                "years_experience": 5
+            },
+            "job_requirement": "Specific requirement from job description",
+            "match_strength": "exact|strong|moderate|weak",
+            "explanation": "Why this qualification matches this requirement"
+        }
+    ]
+}"""
             
             prompt = f"""Match {num_quals} KEY QUALIFICATIONS from the resume to specific job requirements.
 
@@ -380,7 +467,30 @@ Return as JSON with the specified format."""
                 
                 for match_data in data.get('matches', [])[:num_quals]:
                     qual_data = match_data.get('qualification', {})
-                    qual_type = QualificationType(qual_data.get('type', 'experience'))
+                    
+                    # Map type string to enum value, with fallback and compatibility
+                    type_str = qual_data.get('type', 'experience').lower()
+                    
+                    # Handle common variations and misnamed types
+                    type_mapping = {
+                        'skill': 'technical_skill',
+                        'technical': 'technical_skill',
+                        'soft': 'soft_skill',
+                        'exp': 'experience',
+                        'edu': 'education',
+                        'cert': 'certification',
+                        'achieve': 'achievement',
+                        'domain': 'domain_knowledge',
+                        'methodology': 'domain_knowledge'
+                    }
+                    
+                    type_str = type_mapping.get(type_str, type_str)
+                    
+                    try:
+                        qual_type = QualificationType(type_str)
+                    except ValueError:
+                        logger.warning(f"Invalid qualification type: {type_str}, defaulting to experience")
+                        qual_type = QualificationType.EXPERIENCE
                     
                     qualification = Qualification(
                         text=qual_data.get('text', ''),
@@ -453,8 +563,9 @@ Return as JSON with the specified format."""
             return f"Key qualifications include: {', '.join(qual_texts)}."
         
         try:
+            # Use a specific summary generation prompt
             system_prompt = """You are a professional resume writer creating compelling summaries.
-            Write a brief, professional paragraph that naturally incorporates the qualifications."""
+Write a brief, professional paragraph that naturally incorporates the qualifications."""
             
             qual_list = "\n".join([f"- {q.text}" for q in qualifications])
             
@@ -509,6 +620,51 @@ Requirements:
         else:
             return qualifications
     
+    def _determine_qualification_type(self, text: str) -> QualificationType:
+        """
+        Determine qualification type based on text content.
+        
+        Args:
+            text: Qualification text
+            
+        Returns:
+            QualificationType enum value
+        """
+        text_lower = text.lower()
+        
+        # Check for specific patterns
+        if any(word in text_lower for word in ['bachelor', 'master', 'degree', 'university', 'college']):
+            return QualificationType.EDUCATION
+        elif any(word in text_lower for word in ['certified', 'certification', 'certificate']):
+            return QualificationType.CERTIFICATION
+        elif any(word in text_lower for word in ['leadership', 'managed', 'led', 'team', 'communication']):
+            return QualificationType.SOFT_SKILL
+        elif any(word in text_lower for word in ['award', 'achieved', 'recognition', 'accomplishment']):
+            return QualificationType.ACHIEVEMENT
+        elif any(word in text_lower for word in ['methodology', 'framework', 'process', 'domain']):
+            return QualificationType.DOMAIN_KNOWLEDGE
+        elif any(word in text_lower for word in ['python', 'java', 'react', 'aws', 'docker', 'api', 'database', 'development']):
+            return QualificationType.TECHNICAL_SKILL
+        else:
+            return QualificationType.EXPERIENCE
+    
+    def _extract_years_from_text(self, text: str) -> Optional[int]:
+        """
+        Extract years of experience from qualification text.
+        
+        Args:
+            text: Qualification text
+            
+        Returns:
+            Years as integer or None
+        """
+        # Look for patterns like "5+ years", "10 years", etc.
+        pattern = r'(\d+)\+?\s*years?'
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+        return None
+    
     def _extract_basic_qualifications(
         self,
         resume_text: str,
@@ -518,12 +674,22 @@ Requirements:
         """Basic qualification extraction without LLM."""
         qualifications = []
         
-        # Extract years of experience
+        # Extract years of experience with more specific context
         exp_match = re.search(r'(\d+)\+?\s*years?\s+(?:of\s+)?experience', resume_text, re.I)
         if exp_match:
             years = int(exp_match.group(1))
+            # Check if job mentions specific tech stack
+            if 'react' in job_description.lower():
+                text = f"{years}+ Years React Development Experience"
+            elif 'javascript' in job_description.lower() or 'js' in job_description.lower():
+                text = f"{years}+ Years JavaScript Full Stack Experience"
+            elif 'node' in job_description.lower():
+                text = f"{years}+ Years Node.js Development Experience"
+            else:
+                text = f"{years}+ Years Software Development Experience"
+            
             qualifications.append(Qualification(
-                text=f"{years}+ years of professional experience",
+                text=text,
                 type=QualificationType.EXPERIENCE,
                 relevance_score=80.0,
                 years_experience=years
@@ -548,47 +714,115 @@ Requirements:
                 break
         
         # Extract key skills mentioned in job description
-        job_words = set(job_description.lower().split())
-        resume_words = set(resume_text.lower().split())
-        common_skills = job_words & resume_words
+        job_lower = job_description.lower()
+        resume_lower = resume_text.lower()
         
-        # Filter for likely skill words
-        skill_keywords = ['python', 'java', 'javascript', 'react', 'node', 'docker', 
-                         'kubernetes', 'aws', 'azure', 'sql', 'api', 'agile', 'scrum']
+        # Expanded and prioritized skill keywords based on the job
+        skill_keywords = []
         
-        found_skills = [skill for skill in skill_keywords if skill in common_skills]
+        # Prioritize skills mentioned in the job
+        if 'react' in job_lower:
+            skill_keywords.append('react')
+        if 'node' in job_lower or 'nodejs' in job_lower:
+            skill_keywords.append('node.js')
+        if 'typescript' in job_lower:
+            skill_keywords.append('typescript')
+        if 'javascript' in job_lower:
+            skill_keywords.append('javascript')
+        if 'mongodb' in job_lower:
+            skill_keywords.append('mongodb')
+        if 'postgresql' in job_lower:
+            skill_keywords.append('postgresql')
+            
+        # Add other common skills
+        skill_keywords.extend(['python', 'java', 'docker', 'kubernetes', 'aws', 'azure', 'sql', 'api', 'agile', 'scrum'])
         
+        found_skills = []
+        for skill in skill_keywords:
+            if skill.lower() in resume_lower and skill.lower() in job_lower:
+                found_skills.append(skill)
+        
+        # Create concise qualification texts (max 20 words)
         for skill in found_skills[:2]:  # Add top 2 skills
-            # Create more specific qualification text
             skill_name = skill.capitalize()
-            if skill in ['python', 'java', 'javascript', 'react', 'node']:
-                text = f"Development experience with {skill_name} in production environments"
+            if skill in ['react']:
+                text = "React Frontend Development Expertise"
+            elif skill in ['node.js', 'nodejs']:
+                text = "Node.js Backend Development Experience"
+            elif skill in ['typescript']:
+                text = "TypeScript Development Proficiency"
+            elif skill in ['javascript']:
+                text = "JavaScript Full Stack Development"
+            elif skill in ['mongodb']:
+                text = "MongoDB Database Management Experience"
+            elif skill in ['postgresql']:
+                text = "PostgreSQL Database Design Skills"
+            elif skill in ['python', 'java']:
+                text = f"{skill_name} Programming Expertise"
             elif skill in ['docker', 'kubernetes']:
-                text = f"Container orchestration and deployment using {skill_name}"
+                text = f"{skill_name} Container Orchestration"
             elif skill in ['aws', 'azure']:
-                text = f"Cloud infrastructure implementation on {skill_name}"
-            elif skill in ['sql']:
-                text = f"Database design and optimization using {skill_name}"
+                text = f"{skill_name} Cloud Platform Experience"
             elif skill in ['api']:
-                text = f"RESTful {skill_name} design and integration"
+                text = "RESTful API Design & Integration"
             elif skill in ['agile', 'scrum']:
-                text = f"{skill_name} methodology practitioner in software development"
+                text = f"{skill_name} Software Development Methodology"
             else:
-                text = f"Applied experience with {skill_name} technologies"
+                text = f"{skill_name} Technical Proficiency"
             
             qualifications.append(Qualification(
                 text=text,
                 type=QualificationType.TECHNICAL_SKILL,
-                relevance_score=70.0
+                relevance_score=75.0
             ))
         
-        # Ensure we have the requested number
-        while len(qualifications) < num_qualifications:
+        # Add more specific qualifications if needed
+        if len(qualifications) < num_qualifications:
+            # Look for specific experiences or achievements
+            if 'production' in resume_lower or 'deployed' in resume_lower:
+                qualifications.append(Qualification(
+                    text="Production Application Deployment Experience",
+                    type=QualificationType.EXPERIENCE,
+                    relevance_score=70.0
+                ))
+            
+            if 'team' in resume_lower or 'lead' in resume_lower or 'mentor' in resume_lower:
+                qualifications.append(Qualification(
+                    text="Team Collaboration & Leadership Skills",
+                    type=QualificationType.SOFT_SKILL,
+                    relevance_score=65.0
+                ))
+            
+            if 'startup' in job_lower and 'startup' in resume_lower:
+                qualifications.append(Qualification(
+                    text="Startup Environment Experience",
+                    type=QualificationType.EXPERIENCE,
+                    relevance_score=70.0
+                ))
+                
+            if 'ai' in job_lower and ('ai' in resume_lower or 'machine learning' in resume_lower):
+                qualifications.append(Qualification(
+                    text="AI Integration & Implementation Experience",
+                    type=QualificationType.TECHNICAL_SKILL,
+                    relevance_score=75.0
+                ))
+        
+        # Ensure we have the requested number with generic fallbacks
+        generic_quals = [
+            "Full Stack Development Capabilities",
+            "Modern Software Development Practices",
+            "Technical Problem-Solving Skills",
+            "Collaborative Development Experience"
+        ]
+        
+        qual_index = 0
+        while len(qualifications) < num_qualifications and qual_index < len(generic_quals):
             qualifications.append(Qualification(
-                text="Relevant professional experience",
+                text=generic_quals[qual_index],
                 type=QualificationType.EXPERIENCE,
                 relevance_score=50.0
             ))
+            qual_index += 1
         
         return qualifications[:num_qualifications]
     
@@ -894,16 +1128,17 @@ Requirements:
             return {'job_title': None, 'company_name': None}
         
         try:
+            # Use a specific job info extraction prompt
             system_prompt = """You are an expert at extracting job information from job descriptions.
-            Extract the job title and company name from the job description.
-            
-            Return ONLY valid JSON in this format:
-            {
-                "job_title": "Exact job title",
-                "company_name": "Company name"
-            }
-            
-            If the information is not found, use null for that field."""
+Extract the job title and company name from the job description.
+
+Return ONLY valid JSON in this format:
+{
+  "job_title": "Exact job title", 
+  "company_name": "Company name"
+}
+
+If the information is not found, use null for that field."""
             
             prompt = f"""Extract the job title and company name from this job description:
 

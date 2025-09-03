@@ -39,7 +39,7 @@ class CoverLetterJSONGenerator:
         if self.use_llm:
             try:
                 self.llm_client = GroqClient(
-                    model="llama3-70b-8192",  # Use larger model for better writing
+                    model="meta-llama/llama-4-scout-17b-16e-instruct",  # Use larger model for better writing
                     temperature=temperature,
                     max_tokens=max_tokens
                 )
@@ -388,11 +388,15 @@ class CoverLetterJSONGenerator:
 - Specific Interests: Contribution to innovative technology solutions and team collaboration
 - Use web-researched company information above to demonstrate authentic alignment with company values and culture
 
-Generate a 3-paragraph cover letter following the structure defined in the system prompt."""
+Generate a 3-paragraph cover letter following the structure defined in the system prompt.
+
+**OUTPUT RULES:**
+- Strictly return answer as JSON format only
+
+"""
         
         try:
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
-            
             # Parse JSON response
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
@@ -407,7 +411,7 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
                     'closing': letter_content.get('closing', 'Thank you and best regards,')
                 }
         except Exception as e:
-            print(f"LLM generation failed: {e}, using basic template")
+            print(f"LLM generation failed: {e}, using basic template...")
         
         return self._generate_basic(job_description, personal_info, qualifications, company_info)
     

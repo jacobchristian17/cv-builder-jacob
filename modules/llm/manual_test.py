@@ -35,7 +35,7 @@ def test_basic_client():
     print("-" * 40)
     
     try:
-        client = GroqClient(model="llama3-8b-8192")
+        client = GroqClient(model="meta-llama/llama-4-scout-17b-16e-instruct")
         print("✅ Client initialized successfully")
         
         # Test simple generation

@@ -25,7 +25,7 @@ class KeywordMatcher:
         if self.use_llm:
             try:
                 self.llm_client = GroqClient(
-                    model="llama3-8b-8192",
+                    model="meta-llama/llama-4-scout-17b-16e-instruct",
                     temperature=0.2,  # Lower temperature for more consistent results
                     max_tokens=2000
                 )

@@ -10,7 +10,7 @@ from modules.llm.groq_client import GroqClient
 
 
 def test_groq_connection():
-    """Test basic connection to Groq API with llama3-8b-8192 model"""
+    """Test basic connection to Groq API with meta-llama/llama-4-scout-17b-16e-instruct model"""
     
     # Check if API key is set
     api_key = os.getenv("GROQ_API_KEY")
@@ -23,13 +23,13 @@ def test_groq_connection():
     
     try:
         # Initialize the client
-        print("Initializing Groq client with llama3-8b-8192 model...")
-        client = GroqClient(model="llama3-8b-8192")
+        print("Initializing Groq client with meta-llama/llama-4-scout-17b-16e-instruct model...")
+        client = GroqClient(model="meta-llama/llama-4-scout-17b-16e-instruct")
         print("✓ Client initialized successfully")
         
         # Test a simple generation
         print("\nTesting text generation...")
-        prompt = "Say 'Hello from Groq with llama3-8b-8192!' in exactly 5 words."
+        prompt = "Say 'Hello from Groq with meta-llama/llama-4-scout-17b-16e-instruct!' in exactly 5 words."
         response = client.generate(prompt, temperature=0.1, max_tokens=50)
         
         print(f"✓ Response received: {response}")
@@ -42,7 +42,7 @@ def test_groq_connection():
         
         print(f"✓ Response: {response}")
         
-        print("\n✅ All tests passed! Groq connection is working with llama3-8b-8192.")
+        print("\n✅ All tests passed! Groq connection is working with meta-llama/llama-4-scout-17b-16e-instruct.")
         return True
         
     except Exception as e:

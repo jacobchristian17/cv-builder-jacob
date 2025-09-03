@@ -17,7 +17,7 @@ class GroqProvider(LLMProvider):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "llama3-8b-8192",
+        model: str = "meta-llama/llama-4-scout-17b-16e-instruct",
         temperature: float = 0.7,
         max_tokens: int = 1000
     ):

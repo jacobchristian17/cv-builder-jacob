@@ -20,7 +20,7 @@ class GroqClient:
             raise ValueError("Groq API key is required. Set GROQ_API_KEY environment variable or pass api_key parameter.")
         
         self.client = Groq(api_key=self.api_key)
-        self.model = model or os.getenv("GROQ_MODEL", "llama3-8b-8192")
+        self.model = model or os.getenv("GROQ_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
         self.temperature = temperature if temperature is not None else float(os.getenv("GROQ_TEMPERATURE", "0.7"))
         self.max_tokens = max_tokens if max_tokens is not None else int(os.getenv("GROQ_MAX_TOKENS", "1000"))
     

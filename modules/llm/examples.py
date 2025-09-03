@@ -10,7 +10,7 @@ from modules.llm.llm_provider import GroqProvider
 
 
 def basic_generation_example():
-    client = GroqClient(model="llama3-8b-8192")
+    client = GroqClient(model="meta-llama/llama-4-scout-17b-16e-instruct")
     
     prompt = "Explain the importance of ATS optimization in modern job applications."
     response = client.generate(prompt)
@@ -21,7 +21,7 @@ def basic_generation_example():
 
 
 def chat_example():
-    client = GroqClient(model="llama3-8b-8192")
+    client = GroqClient(model="meta-llama/llama-4-scout-17b-16e-instruct")
     
     messages = [
         {"role": "system", "content": "You are a helpful career advisor."},
@@ -38,7 +38,7 @@ def chat_example():
 
 
 def streaming_example():
-    client = GroqClient(model="llama3-8b-8192")
+    client = GroqClient(model="meta-llama/llama-4-scout-17b-16e-instruct")
     
     prompt = "List 10 common ATS keywords for software engineering positions."
     
@@ -52,7 +52,7 @@ def streaming_example():
 
 
 def resume_analysis_example():
-    provider = GroqProvider(model="llama3-8b-8192")
+    provider = GroqProvider(model="meta-llama/llama-4-scout-17b-16e-instruct")
     
     sample_resume = """
     John Doe
@@ -81,7 +81,7 @@ def resume_analysis_example():
 
 
 def keyword_extraction_example():
-    provider = GroqProvider(model="llama3-8b-8192")
+    provider = GroqProvider(model="meta-llama/llama-4-scout-17b-16e-instruct")
     
     job_description = """
     We are seeking a Senior Full Stack Developer with expertise in React, Node.js, 
@@ -98,7 +98,7 @@ def keyword_extraction_example():
 
 
 def resume_improvement_example():
-    provider = GroqProvider(model="llama3-8b-8192")
+    provider = GroqProvider(model="meta-llama/llama-4-scout-17b-16e-instruct")
     
     original_section = """
     I worked on various web projects using different technologies. 
@@ -121,7 +121,7 @@ def resume_improvement_example():
 
 def run_all_examples():
     print("=" * 50)
-    print("LLM Module Examples - Using Groq with llama3-8b-8192")
+    print("LLM Module Examples - Using Groq with meta-llama/llama-4-scout-17b-16e-instruct")
     print("=" * 50)
     print()
     

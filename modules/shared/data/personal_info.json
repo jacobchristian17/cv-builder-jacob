@@ -13,11 +13,11 @@
         "email": "jcpguanzing@gmail.com",
         "website": {
             "url": "https://jacobs-space.vercel.app",
-            "text": "jacobs-space.com"
+            "text": "jacobs-space.vercel.app"
         },
         "linkedin": {
             "url": "https://www.linkedin.com/in/jcpguanzing/",
-            "text": "LinkedIn/jcpguanzing",
+            "text": "linkedin.com/in/jcpguanzing",
             "icon_url": "https://logospng.org/download/linkedin/logo-linkedin-icon-4096.png"
         }
     },
@@ -89,6 +89,7 @@
                         "JavaScript ES6",
                         "TypeScript",
                         "NextJS",
+                        "PHP",
                         "SASS",
                         "SCSS"
                     ]
@@ -103,7 +104,8 @@
                         "Responsive Design",
                         "Data visualization",
                         "Product development",
-                        "Microservices"
+                        "Microservices",
+                        "Unit testing"
                     ]
                 },
                 {
@@ -118,7 +120,7 @@
                         "MongoDB",
                         "SQL",
                         "MySQL",
-                        "Postgre"
+                        "PostgreSQL"
                     ]
                 },
                 {
@@ -152,7 +154,9 @@
                         "GitLab",
                         "GitBucket",
                         "Figma",
-                        "Storybook"
+                        "Storybook",
+                        "Playwright",
+                        "Jest"
                     ]
                 },
                 {
@@ -185,7 +189,8 @@
                         "Technical documentation",
                         "Stakeholder engagement",
                         "Technical specifications",
-                        "Team mentorship"
+                        "Team mentorship",
+                        "Collaboration skills"
                     ]
                 },
                 {
@@ -196,8 +201,7 @@
                         "Logic visualization",
                         "Debugging",
                         "Research",
-                        "Automation",
-                        "Triage"
+                        "Automation"
                     ]
                 },
                 {
@@ -215,16 +219,14 @@
                     "skill_list": [
                         "Ambitious",
                         "Visionary",
-                        "Committed",
                         "Intuitive",
-                        "Creativity",
                         "Consistent",
                         "Work autonomously",
                         "Self-driven",
-                        "friendly",
+                        "Friendly",
                         "Ability to work independently",
                         "Communication skills",
-                        "Best practices"
+                        "Flexibility"
                     ]
                 },
                 {

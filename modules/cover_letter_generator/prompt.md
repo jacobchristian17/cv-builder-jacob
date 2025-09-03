@@ -61,13 +61,13 @@ IMPORTANT: If no specific company name is identified (indicated by null, empty, 
 Return JSON with the following structure:
 ```json
 {
-  "salutation": "Dear Hiring Manager," or "Dear [Name]," if specific contact mentioned,
+  "salutation": "'Dear Hiring Manager', or 'Dear [Name]', if specific contact mentioned" ,
   "paragraphs": [
     "Paragraph 1: 3-4 sentences covering enthusiasm, experience, key technical skills, and team/collaboration context",
     "Paragraph 2: 4-5 sentences covering specific achievements with metrics, leadership experience, relevant methodologies, and specialized skills that match job requirements", 
     "Paragraph 3: 3-4 sentences covering company alignment, role-specific interest, and professional closing"
   ],
-  "closing": "Best regards," or "Sincerely,",
+  "closing": "'Best regards,' or 'Sincerely,'",
   "company_info": {
     "name": "Extract company name from job description",
     "address_line1": "Extract street address if mentioned in job description",
