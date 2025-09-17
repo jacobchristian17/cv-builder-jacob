@@ -77,8 +77,6 @@ class CoverLetterGenerator:
         Returns:
             Path to generated PDF file
         """
-        print("📝 Step 1: Generating cover letter content with LLM...")
-        
         # Step 1: Use JSON generator to create content
         content = self.json_generator.generate_content(
             job_description_path=job_description_path,
@@ -86,31 +84,20 @@ class CoverLetterGenerator:
             qualifications_path=qualifications_path,
             company_info=company_info
         )
-        
+
         # Save content to temporary JSON file
         temp_json_filename = self._create_temp_filename(content, custom_filename)
         temp_json_path = self._temp_dir / temp_json_filename
-        
+
         self.json_generator.save_to_json(content, str(temp_json_path))
-        print(f"   ✅ Content generated and saved to temp JSON")
-        
-        print("📄 Step 2: Converting JSON content to PDF...")
-        
+
         # Step 2: Use PDF generator to create PDF from JSON
         pdf_filename = self._create_pdf_filename(content, custom_filename)
-        
+
         pdf_path = await self.pdf_generator.generate_pdf_from_data(
             cover_letter_data=content,
             filename=pdf_filename
         )
-        
-        print(f"   ✅ PDF generated successfully")
-        
-        # Keep temp JSON file for editing and regeneration
-        print(f"   💾 Temp JSON saved for editing: {temp_json_path}")
-        print(f"   📝 To edit and regenerate PDF:")
-        print(f"      1. Edit: {temp_json_path}")
-        print(f"      2. Run: python -m modules.cover_letter_generator.pdf_generator \"{temp_json_path}\"")
         
         # Note: Temp JSON is NOT cleaned up for manual editing
         

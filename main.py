@@ -56,23 +56,17 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
     
     # Step 1: Extract Qualifications (skip if --no-top is used)
     if not no_top:
-        print("\n📋 STEP 1: EXTRACTING QUALIFICATIONS")
-        print("-" * 40)
-
+        print("\n Extracting qualifications...")
         try:
             extractor = QualificationsExtractor(num_qualifications=4)
 
             if use_default:
-                print("📝 Using default qualifications from prompt.md")
-                print(f"📄 Extracting job info from: {job_file}")
                 # Get default qualifications with job info from the job file
                 qualifications = extractor.get_default_qualifications(job_description_path=job_file)
                 print(f"✅ Loaded {len(qualifications)} default qualifications")
             else:
-                print(f"📄 Processing job description: {job_file}")
                 # Extract qualifications (auto-saves to qualifications.json)
                 qualifications = extractor.extract_qualifications(job_file)
-                print(f"✅ Extracted {len(qualifications)} qualifications")
             
             # Load saved data to get job info
             quals_file = Path("modules/shared/qualifications/qualifications.json")
@@ -82,10 +76,8 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
                 
                 job_title = quals_data['metadata'].get('job_title', 'Unknown')
                 company_name = quals_data['metadata'].get('company_name', 'Unknown')
-                
-                print(f"🎯 Job Title: {job_title}")
-                print(f"🏢 Company: {company_name}")
-                
+                print(f"✅ Done")
+                print("-" * 40)
             else:
                 print("❌ Error: Qualifications file not found")
                 return False
@@ -113,11 +105,9 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         
         job_title = "Not specified"
         company_name = "Not specified"
-        print("✅ Created empty qualifications file for PDF generation")
     
     # Step 2: Generate CV
-    print("\n📄 STEP 2: GENERATING CV")
-    print("-" * 40)
+    print("\nGenerating CV...")
     
     try:
         # Load personal info to get person name
@@ -125,7 +115,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
             personal_data = json.load(f)
         
         person_name = personal_data['personal_info'].get('name', 'Unknown')
-        print(f"👤 Person: {person_name}")
         
         # Create custom filename: {job_title}_{company_name}_{person_name}.pdf
         safe_job_title = sanitize_filename(job_title)
@@ -133,7 +122,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         safe_person = person_name  # Keep spaces in person name
         
         custom_filename = f"{safe_job_title}_{safe_company}_{safe_person}.pdf"
-        print(f"📁 CV filename: {custom_filename}")
         
         # Initialize CV generator with root output directory
         generator = CVPDFGenerator(
@@ -145,11 +133,9 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         generator.output_dir = pdf_output_dir
         
         # Generate CV
-        print("🔧 Generating CV with qualifications...")
         output_path = await generator.run(custom_filename)
-        
-        print(f"✅ CV generated successfully!")
-        print(f"📁 Saved to: {output_path}")
+        print(f"✅ Done")
+        print("-" * 40)
         
     except Exception as e:
         print(f"❌ Error in CV generation: {e}")
@@ -158,7 +144,7 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
     # Step 3: Generate Cover Letter (skip if --no-cover-letter is used)
     cover_letter_path = None
     if not no_cover_letter:
-        print("\n✉️ STEP 3: GENERATING COVER LETTER")
+        print("\nCreating cover letter...")
         print("-" * 40)
         
         try:
@@ -180,8 +166,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
             # Generate cover letter filename
             cover_letter_filename = f"CoverLetter_{safe_job_title}_{safe_company}_{safe_person}.pdf"
             
-            print(f"📝 Generating personalized cover letter...")
-            print(f"📁 Cover letter filename: {cover_letter_filename}")
             
             # Generate cover letter
             cover_letter_path = await cover_generator.generate(
@@ -192,8 +176,8 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
                 custom_filename=cover_letter_filename
             )
             
-            print(f"✅ Cover letter generated successfully!")
-            print(f"📁 Saved to: {cover_letter_path}")
+            print(f"✅ Done")
+            print("-" * 40)
             
         except Exception as e:
             print(f"⚠️ Warning: Cover letter generation failed: {e}")
@@ -204,8 +188,7 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         print("-" * 40)
     
     # Step 4: Score CV with ATS Checker
-    print("\n📊 STEP 4: SCORING CV WITH ATS CHECKER")
-    print("-" * 40)
+    print("\nScoring...")
     
     try:
         # Import ATS checker
@@ -225,7 +208,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         
         try:
             resume_data = resume_parser.parse(str(pdf_path))
-            print(f"📄 Resume parsed: {len(resume_data.get('skills', []))} skills, {len(resume_data.get('hard_skills', []))} hard skills")
         except Exception as parse_error:
             print(f"⚠️  Failed to parse PDF, using personal data: {parse_error}")
             resume_data = personal_data
@@ -322,7 +304,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         with open(score_path, 'w') as f:
             json.dump(score_dict, f, indent=2)
         
-        print(f"📋 Score report saved: {score_path}")
         
     except Exception as e:
         print(f"❌ Error in ATS scoring: {e}")
@@ -330,12 +311,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         return True  # Still consider workflow successful if CV was generated
     
     print("\n🎉 WORKFLOW COMPLETED SUCCESSFULLY!")
-    print("=" * 60)
-    print(f"📄 CV Generated: output/pdf/{custom_filename}")
-    if cover_letter_path:
-        print(f"✉️ Cover Letter: {cover_letter_path}")
-    print(f"📊 Score Report: output/scores/{score_filename}")
-    print("=" * 60)
     
     return True
 
@@ -404,10 +379,6 @@ Examples:
         )
         
         if success:
-            print("\n💡 Next steps:")
-            print("- Review the generated CV")
-            print("- Check the ATS score report")
-            print("- Make adjustments if needed")
             sys.exit(0)
         else:
             print("\n❌ Workflow failed")

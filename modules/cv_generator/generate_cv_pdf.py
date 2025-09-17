@@ -207,19 +207,11 @@ class CVPDFGenerator:
     
     async def run(self, custom_filename=None):
         """Main execution function"""
-        print("🚀 Starting CV PDF generation...")
-        
         # Load data
-        print("📄 Loading personal data...")
         data = self.load_personal_data()
         
         # Load qualifications if available
-        print("🎯 Loading qualifications data...")
         qualifications_data = self.load_qualifications_data()
-        if qualifications_data:
-            print(f"   Found qualifications for: {qualifications_data['job_title']} at {qualifications_data['company_name']}")
-        else:
-            print("   No qualifications file found (optional)")
         
         # Generate filename
         if custom_filename:
@@ -244,25 +236,14 @@ class CVPDFGenerator:
         output_path = self.output_dir / output_filename
         
         # Create HTML with embedded data
-        print("🔧 Processing HTML template...")
         html_content = self.create_html_with_data(data, qualifications_data)
         
         # Generate PDF
-        print("📋 Generating PDF...")
         pdf_buffer = await self.generate_pdf(html_content, output_filename)
         
         # Save PDF
         with open(output_path, 'wb') as f:
             f.write(pdf_buffer)
-        
-        print(f"✅ PDF generated successfully!")
-        print(f"📁 Output location: {output_path.absolute()}")
-        print(f"📄 Filename: {output_filename}")
-        print(f"📊 File size: {len(pdf_buffer):,} bytes")
-        
-        # Print job/company info if available
-        if qualifications_data:
-            print(f"🎯 Tailored for: {qualifications_data['job_title']} at {qualifications_data['company_name']}")
         
         return output_path
 
@@ -286,11 +267,9 @@ async def main():
         generator = CVPDFGenerator(args.data, args.template, args.output_dir)
         output_path = await generator.run(args.output)
         
-        print(f"\n🎉 Success! Your CV PDF has been generated:")
-        print(f"   {output_path}")
+        # Success - CV PDF has been generated
         
     except Exception as e:
-        print(f"❌ Error: {e}")
         return 1
     
     return 0

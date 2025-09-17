@@ -29,11 +29,11 @@ Structure each qualification as:
 
 ### Example Output:
 ```
-"Computer Engineering graduate from Mapua University Manila",
+"Computer Engineering graduate from Mapua University Manila"
 
-"Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
+"Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation"
 
-"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
+"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
 
 "Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
 ```

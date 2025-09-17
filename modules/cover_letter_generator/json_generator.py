@@ -78,7 +78,6 @@ class CoverLetterJSONGenerator:
                 system_prompt = '\n'.join(system_prompt_lines).strip()
                 
                 if system_prompt:
-                    print(f"   📝 Loaded custom prompt from {self.prompt_file}")
                     return system_prompt
                 else:
                     print(f"   ⚠️  Warning: Could not parse system prompt from {self.prompt_file}")
@@ -391,7 +390,7 @@ class CoverLetterJSONGenerator:
 Generate a 3-paragraph cover letter following the structure defined in the system prompt.
 
 **OUTPUT RULES:**
-- Strictly return answer as JSON format only
+- Strictly return answer in JSON format only
 
 """
         

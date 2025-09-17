@@ -180,13 +180,13 @@ Structure each qualification as:
 
 ### Example Output:
 ```
-"'Computer Engineering' graduate from Mapua University Manila",
+"Computer Engineering graduate from Mapua University Manila"
 
-"Expertise on 'React, Next.js, Node.js' Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
+"Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation"
 
-"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
+"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
 
-"Solid grasp on 'technical triage, debt, & ownership'; proven ability to lead on tasks and guide colleagues"
+"Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
 ```"""
     
     def extract_qualifications(
@@ -251,13 +251,11 @@ APPLICANT PROFILE (personal_info.json):
 
 Based on the instructions in the system prompt, extract exactly 4 qualifications that best match this job description.
 
-Return the output in the exact format specified (4 qualification items, each in single quotes on separate lines without commas).
+Return the output in the exact format specified (4 qualification items, each in double quotes on separate lines without commas).
 
 """
             
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
-            print(">>> LLM CLIENT GENERATE [OK]")
-            print(response)
             # Parse the response which should be in the format:
             # 'Qualification Item'
             qualifications = []
@@ -329,43 +327,78 @@ Return the output in the exact format specified (4 qualification items, each in 
                     )
                     qualifications.append(qualification)
             
-            # If we still don't have enough qualifications, log a warning
+            # If we still don't have enough qualifications, supplement with defaults
             if len(qualifications) < num_quals:
                 logger.warning(f"Only extracted {len(qualifications)} qualifications out of {num_quals} requested")
                 logger.debug(f"Response snippet: {response[:200]}...")
-                
+
                 # If we have no qualifications at all, fall back to basic extraction
                 if len(qualifications) == 0:
                     logger.warning("No qualifications extracted from LLM response, falling back to basic extraction")
                     return self._extract_basic_qualifications(resume_text, job_description, num_quals)
+
+                # Add default fallback qualifications to reach the target number
+                default_qualifications = self._get_default_fallback_qualifications(job_description_path)
+                needed_count = num_quals - len(qualifications)
+
+                logger.info(f"Adding {needed_count} default qualifications to reach target of {num_quals}")
+
+                # Add default qualifications, avoiding duplicates
+                for default_qual in default_qualifications:
+                    if needed_count <= 0:
+                        break
+
+                    # Check if similar qualification already exists
+                    is_duplicate = any(
+                        self._qualifications_similar(default_qual.text, existing.text)
+                        for existing in qualifications
+                    )
+
+                    if not is_duplicate:
+                        # Adjust relevance score to be lower than existing ones
+                        min_existing_score = min(q.relevance_score for q in qualifications) if qualifications else 90.0
+                        default_qual.relevance_score = min(default_qual.relevance_score, min_existing_score - 5.0)
+
+                        qualifications.append(default_qual)
+                        needed_count -= 1
+                        logger.info(f"Added default qualification: {default_qual.text}")
+
+                # Ensure we still have exactly the requested number
+                qualifications = qualifications[:num_quals]
             
+            # Log final qualifications
+            if qualifications:
+                logger.info(f"Final extracted qualifications ({len(qualifications)}):")
+                for i, qual in enumerate(qualifications, 1):
+                    logger.info(f"  {i}. {qual.text} (Type: {qual.type.value}, Score: {qual.relevance_score})")
+            else:
+                logger.warning("No qualifications extracted from LLM response")
+
             # Save to JSON if requested
             if should_save and qualifications:
                 self._save_qualifications_to_json(
-                    qualifications, 
+                    qualifications,
                     job_description_path,
                     output_filename,
                     job_title,
                     company_name
                 )
-            
             return qualifications if qualifications else self._extract_basic_qualifications(resume_text, job_description, num_quals)
                 
         except Exception as e:
             logger.error(f"LLM extraction failed: {e}")
         
         qualifications = self._extract_basic_qualifications(resume_text, job_description, num_quals)
-        
         # Save to JSON if requested
         if should_save:
             self._save_qualifications_to_json(
                 qualifications,
-                job_description_path, 
+                job_description_path,
                 output_filename,
                 job_title,
                 company_name
             )
-        
+
         return qualifications
     
     def format_qualifications_list(
@@ -558,6 +591,13 @@ Return as JSON with the specified format."""
                     )
                     matches.append(match)
                 
+                # Log final qualification matches
+                logger.info(f"Final qualification matches ({len(matches)}):")
+                for i, match in enumerate(matches, 1):
+                    logger.info(f"  {i}. {match.qualification.text}")
+                    logger.info(f"      -> Matches: {match.job_requirement[:50]}...")
+                    logger.info(f"      -> Strength: {match.match_strength}")
+
                 # Save to JSON if requested
                 should_save = save_to_json if save_to_json is not None else self.auto_save
                 if should_save:
@@ -568,7 +608,7 @@ Return as JSON with the specified format."""
                         job_title,
                         company_name
                     )
-                
+
                 return matches
                 
         except Exception as e:
@@ -577,7 +617,14 @@ Return as JSON with the specified format."""
         # Fallback
         qualifications = self._extract_basic_qualifications(resume_text, job_description, num_quals)
         matches = [self._create_basic_match(qual, job_description) for qual in qualifications]
-        
+
+        # Log final qualification matches from fallback
+        logger.info(f"Final qualification matches from fallback ({len(matches)}):")
+        for i, match in enumerate(matches, 1):
+            logger.info(f"  {i}. {match.qualification.text}")
+            logger.info(f"      -> Matches: {match.job_requirement[:50]}...")
+            logger.info(f"      -> Strength: {match.match_strength}")
+
         # Save to JSON if requested
         should_save = save_to_json if save_to_json is not None else self.auto_save
         if should_save:
@@ -588,7 +635,7 @@ Return as JSON with the specified format."""
                 job_title,
                 company_name
             )
-        
+
         return matches
     
     def generate_qualification_summary(
@@ -701,10 +748,10 @@ Requirements:
     def _extract_years_from_text(self, text: str) -> Optional[int]:
         """
         Extract years of experience from qualification text.
-        
+
         Args:
             text: Qualification text
-            
+
         Returns:
             Years as integer or None
         """
@@ -714,6 +761,67 @@ Requirements:
         if match:
             return int(match.group(1))
         return None
+
+    def _get_default_fallback_qualifications(self, job_description_path: Optional[str] = None) -> List[Qualification]:
+        """
+        Get default fallback qualifications to use when LLM output is insufficient.
+
+        Args:
+            job_description_path: Optional path to job description for context
+
+        Returns:
+            List of default Qualification objects
+        """
+        # Use the existing default qualifications from prompt.md
+        default_quals_text = [
+            "Computer Engineering graduate from Mapua University Manila",
+            "Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
+            "Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
+            "Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
+        ]
+
+        qualifications = []
+        for i, qual_text in enumerate(default_quals_text):
+            # Determine qualification type based on content
+            qual_type = self._determine_qualification_type(qual_text)
+
+            qualification = Qualification(
+                text=qual_text,
+                type=qual_type,
+                relevance_score=80.0 - (i * 5),  # Score: 80, 75, 70, 65 (lower than typical LLM scores)
+                evidence=None,
+                years_experience=self._extract_years_from_text(qual_text)
+            )
+            qualifications.append(qualification)
+
+        logger.debug(f"Generated {len(qualifications)} default fallback qualifications")
+        return qualifications
+
+    def _qualifications_similar(self, text1: str, text2: str, threshold: float = 0.7) -> bool:
+        """
+        Check if two qualification texts are similar to avoid duplicates.
+
+        Args:
+            text1: First qualification text
+            text2: Second qualification text
+            threshold: Similarity threshold (0.0 to 1.0)
+
+        Returns:
+            True if qualifications are similar
+        """
+        # Simple similarity check based on word overlap
+        words1 = set(text1.lower().split())
+        words2 = set(text2.lower().split())
+
+        if not words1 or not words2:
+            return False
+
+        # Calculate Jaccard similarity
+        intersection = len(words1.intersection(words2))
+        union = len(words1.union(words2))
+
+        similarity = intersection / union if union > 0 else 0.0
+        return similarity >= threshold
     
     def _extract_basic_qualifications(
         self,
