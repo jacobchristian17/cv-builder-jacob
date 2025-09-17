@@ -226,14 +226,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         
         print(f"✅ ATS Score calculated!")
         print(f"📊 Overall Score: {score_result.overall_score}%")
-        print(f"📈 Breakdown:")
-        print(f"   • Keywords: {score_result.keyword_score}%")
-        print(f"   • Hard Skills: {score_result.hard_skills_score}%")
-        print(f"   • Soft Skills: {score_result.soft_skills_score}%")
-        print(f"   • Job Title: {score_result.job_title_score}%")
-        print(f"   • Experience: {score_result.experience_score}%")
-        print(f"   • Education: {score_result.education_score}%")
-        print(f"   • Formatting: {score_result.formatting_score}%")
         
         # Display missing items if any
         feedback = score_result.detailed_feedback

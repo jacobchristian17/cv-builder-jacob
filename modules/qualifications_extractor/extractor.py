@@ -120,9 +120,9 @@ class QualificationsExtractor:
             qualifications.append(qualification)
 
         # Extract job info if job description path provided
-        job_title = "Default Position"
-        company_name = "Default Company"
-
+        job_title = "Full-stack Engineer"
+        company_name = ""
+        
         if job_description_path and job_description_path != "default":
             try:
                 job_description = self._load_job_description(job_description_path)

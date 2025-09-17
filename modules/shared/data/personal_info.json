@@ -91,7 +91,8 @@
                         "TypeScript",
                         "NextJS",
                         "GraphQL",
-                        "PHP",
+                        "jQuery",
+                        "Bootstrap",
                         "SASS",
                         "SCSS"
                     ]
@@ -114,7 +115,7 @@
                 {
                     "category": "Backend",
                     "skill_list": [
-                        "Python",
+                        "Python Django",
                         "Node",
                         "Express",
                         "REST API",
@@ -223,13 +224,13 @@
                 {
                     "category": "Work Ethics",
                     "skill_list": [
-                        "Creativity",
+                        "Analytical thinking",
                         "Visionary",
                         "Intuitive",
+                        "Flexibility",
                         "Innovation",
-                        "Work autonomously",
                         "Self-driven",
-                        "Friendly",
+                        "Leadership experience",
                         "Ability to work independently",
                         "Communication skills",
                         "Interpersonal skills"
