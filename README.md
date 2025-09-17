@@ -177,7 +177,7 @@ MIT License - See LICENSE file for details
 **Jacob Christian P. Guanzing**
 - Full Stack & AI Integration Engineer
 - [LinkedIn](https://linkedin.com/in/jcpguanzing)
-- [Portfolio](https://jacobs-space.com)
+- [Portfolio](https://jacobs-space.vercel.app)
 
 ## 📊 Project Stats
 
