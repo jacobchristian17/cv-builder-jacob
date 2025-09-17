@@ -39,7 +39,7 @@ def sanitize_filename(text):
     return sanitized.strip()
 
 
-async def run_workflow(job_file, no_top=False, no_cover_letter=False):
+async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_default=False):
     """Run the complete workflow"""
     
     print("🚀 STARTING ATS CV WORKFLOW")
@@ -58,14 +58,21 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False):
     if not no_top:
         print("\n📋 STEP 1: EXTRACTING QUALIFICATIONS")
         print("-" * 40)
-        
+
         try:
             extractor = QualificationsExtractor(num_qualifications=4)
-            print(f"📄 Processing job description: {job_file}")
-            
-            # Extract qualifications (auto-saves to qualifications.json)
-            qualifications = extractor.extract_qualifications(job_file)
-            print(f"✅ Extracted {len(qualifications)} qualifications")
+
+            if use_default:
+                print("📝 Using default qualifications from prompt.md")
+                print(f"📄 Extracting job info from: {job_file}")
+                # Get default qualifications with job info from the job file
+                qualifications = extractor.get_default_qualifications(job_description_path=job_file)
+                print(f"✅ Loaded {len(qualifications)} default qualifications")
+            else:
+                print(f"📄 Processing job description: {job_file}")
+                # Extract qualifications (auto-saves to qualifications.json)
+                qualifications = extractor.extract_qualifications(job_file)
+                print(f"✅ Extracted {len(qualifications)} qualifications")
             
             # Load saved data to get job info
             quals_file = Path("modules/shared/qualifications/qualifications.json")
@@ -342,9 +349,11 @@ Examples:
   python workflow.py                            # Full workflow (uses job.txt)
   python workflow.py --no-top                   # Skip qualifications extraction
   python workflow.py --no-cover-letter          # Skip cover letter generation
+  python workflow.py --default                  # Use default qualifications from prompt.md
   python workflow.py custom_job.txt             # With specific job file
   python workflow.py custom_job.txt --no-top    # Custom job file, no qualifications
   python workflow.py --no-top --no-cover-letter # CV only, no extras
+  python workflow.py --default --no-cover-letter # Default qualifications, no cover letter
         """
     )
     
@@ -372,7 +381,13 @@ Examples:
         action='store_true',
         help='Skip cover letter generation'
     )
-    
+
+    parser.add_argument(
+        '--default',
+        action='store_true',
+        help='Use default qualification examples from prompt.md instead of extracting from job description'
+    )
+
     args = parser.parse_args()
     
     # Check if job file exists
@@ -382,9 +397,10 @@ Examples:
     
     try:
         success = await run_workflow(
-            args.job_file, 
-            no_top=args.no_top, 
-            no_cover_letter=args.no_cover_letter
+            args.job_file,
+            no_top=args.no_top,
+            no_cover_letter=args.no_cover_letter,
+            use_default=args.default
         )
         
         if success:

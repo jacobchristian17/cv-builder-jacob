@@ -44,7 +44,7 @@
                 "location": "(AU/CA) — Makati, NCR",
                 "period": "May 2023 - Aug 2024",
                 "features": [
-                    "Built '10+ CMS frontend components' improving usability of content authors for company website management",
+                    "Built '30+ CMS frontend components' improving usability of content authors for company website management",
                     "'Led Angular Ionic upgrade from v12 to v18' for cross-platform Health & Safety mobile app for iOS and Android users",
                     "Developed '4+ reusable components' with React memoization, 'improving loading performance by 30%'",
                     "Implemented '10+ automated testing' with Selenium, 'reducing manual testing cycles by 50%'"
@@ -80,15 +80,17 @@
                 {
                     "category": "Frontend Tools",
                     "skill_list": [
-                        "React",
+                        "React Native",
                         "Redux",
                         "Angular",
                         "Ionic",
-                        "HTML 5",
-                        "CSS 3",
+                        "HTML5",
+                        "Tailwind CSS 3",
+                        ".NET",
                         "JavaScript ES6",
                         "TypeScript",
                         "NextJS",
+                        "GraphQL",
                         "PHP",
                         "SASS",
                         "SCSS"
@@ -100,7 +102,8 @@
                         "User Interfaces",
                         "User Experience",
                         "API Integration",
-                        "Server-side rendering",
+                        "TTD",
+                        "Test-Driven Development",
                         "Responsive Design",
                         "Data visualization",
                         "Product development",
@@ -120,7 +123,10 @@
                         "MongoDB",
                         "SQL",
                         "MySQL",
-                        "PostgreSQL"
+                        "PostgreSQL",
+                        "C++",
+                        "C"
+                        
                     ]
                 },
                 {
@@ -156,6 +162,7 @@
                         "Figma",
                         "Storybook",
                         "Playwright",
+                        "Cypress",
                         "Jest"
                     ]
                 },
@@ -166,9 +173,8 @@
                         "Design software",
                         "Design Systems",
                         "Design Patterns",
-                        "Flowcharts",
                         "Troubleshooting",
-                        "Coding standards",
+                        "Best practices",
                         "Feasibility study"
                     ]
                 }
@@ -217,7 +223,7 @@
                 {
                     "category": "Work Ethics",
                     "skill_list": [
-                        "Ambitious",
+                        "Creative",
                         "Visionary",
                         "Intuitive",
                         "Consistent",
@@ -226,7 +232,7 @@
                         "Friendly",
                         "Ability to work independently",
                         "Communication skills",
-                        "Flexibility"
+                        "Interpersonal skills"
                     ]
                 },
                 {
@@ -278,7 +284,7 @@
             },
             {
                 "title": "Continuous Learning",
-                "content": "I stay motivated by actively explore advancements in AI/ML, cloud platforms, and modern frontend frameworks, following the latest trends in software development with articles and blogs. Received technical training during my tenure on enterprise corporations"
+                "content": "I stay motivated by actively explore advancements in AI/ML technologies, cloud platforms, and modern frontend frameworks, following the latest trends in software development with articles and blogs. Received technical training during my tenure on enterprise corporations"
             }
         ]
     }

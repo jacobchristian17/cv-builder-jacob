@@ -86,6 +86,66 @@ class QualificationsExtractor:
             logger.warning(f"Error loading prompt from {self.prompt_file}: {e}")
             return self._get_fallback_prompt()
     
+    def get_default_qualifications(self, job_description_path: Optional[str] = None) -> List[Qualification]:
+        """
+        Get default qualifications from the example output in prompt.md.
+        Optionally extract job info from a job description file.
+
+        Args:
+            job_description_path: Optional path to job description file to extract job info from
+
+        Returns:
+            List of default Qualification objects
+        """
+        # Default qualifications from prompt.md example
+        default_quals_text = [
+            "Computer Engineering graduate from Mapua University Manila",
+            "Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
+            "Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
+            "Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
+        ]
+
+        qualifications = []
+        for i, qual_text in enumerate(default_quals_text):
+            # Determine qualification type based on content
+            qual_type = self._determine_qualification_type(qual_text)
+
+            qualification = Qualification(
+                text=qual_text,
+                type=qual_type,
+                relevance_score=95.0 - (i * 5),  # Score: 95, 90, 85, 80
+                evidence=None,
+                years_experience=self._extract_years_from_text(qual_text)
+            )
+            qualifications.append(qualification)
+
+        # Extract job info if job description path provided
+        job_title = "Default Position"
+        company_name = "Default Company"
+
+        if job_description_path and job_description_path != "default":
+            try:
+                job_description = self._load_job_description(job_description_path)
+                job_info = self._extract_job_info(job_description)
+                if job_info.get('job_title'):
+                    job_title = job_info['job_title']
+                if job_info.get('company_name'):
+                    company_name = job_info['company_name']
+                logger.info(f"Extracted job info - Title: {job_title}, Company: {company_name}")
+            except Exception as e:
+                logger.warning(f"Could not extract job info from {job_description_path}: {e}")
+
+        # Save default qualifications to JSON for consistency
+        self._save_qualifications_to_json(
+            qualifications,
+            job_description_path=job_description_path or "default",
+            output_filename="qualifications.json",
+            job_title=job_title,
+            company_name=company_name
+        )
+
+        return qualifications
+
     def _get_fallback_prompt(self) -> str:
         """Get fallback prompt when MD file is not available."""
         
@@ -110,25 +170,23 @@ Analyze the provided job description and extract the top 4 matching qualificatio
 - Avoid repeating project details; summarize relevant projects instead of copying content
 - Only use information that exists in the provided JSON data
 - Do not fabricate or add non-existent information
-- Qualification description should not be more than 20 words
+- Qualification description should be more than 10 words and not more than 20 words
 
 ## Output Format
+Structure each qualification as:
 ```
-'{qualification_item_1}',
-'{qualification_item_2}',
-'{qualification_item_3}',
-'{qualification_item_4}',
+'{qualification_item}'
 ```
 
 ### Example Output:
 ```
-'Web Development Experience with React Expertise'
+"'Computer Engineering' graduate from Mapua University Manila",
 
-'Production-Grade Application Development & Testing'
+"Expertise on 'React, Next.js, Node.js' Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
 
-'API Integration & Modern Development Practices'
+"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
 
-'Computer Engineering Graduate with Strong Technical Foundation'
+"Solid grasp on 'technical triage, debt, & ownership'; proven ability to lead on tasks and guide colleagues"
 ```"""
     
     def extract_qualifications(
@@ -193,15 +251,7 @@ APPLICANT PROFILE (personal_info.json):
 
 Based on the instructions in the system prompt, extract exactly 4 qualifications that best match this job description.
 
-Return the output in the exact format specified (4 qualification items, each in single quotes).
-
-### **OUTPUT FORMAT:**
-```
-'{qualification_item_1}',
-'{qualification_item_2}',
-'{qualification_item_3}',
-'{qualification_item_4}',
-```
+Return the output in the exact format specified (4 qualification items, each in single quotes on separate lines without commas).
 
 """
             

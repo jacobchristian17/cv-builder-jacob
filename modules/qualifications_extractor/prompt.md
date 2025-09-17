@@ -19,21 +19,21 @@ Analyze the provided job description and extract the top 4 matching qualificatio
 - Avoid repeating project details; summarize relevant projects instead of copying content
 - Only use information that exists in the provided JSON data
 - Do not fabricate or add non-existent information
-- Qualification description should not be more than 20 words
+- Qualification description should be more than 10 words and not more than 20 words
 
 ## Output Format
 Structure each qualification as:
 ```
-'{qualification_item}'
+"{qualification_item}"
 ```
 
 ### Example Output:
 ```
-'Web Development Experience with React Expertise'
+"Computer Engineering graduate from Mapua University Manila",
 
-'Production-Grade Application Development & Testing'
+"Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
 
-'API Integration & Modern Development Practices'
+"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
 
-'Computer Engineering Graduate with Strong Technical Foundation'
+"Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
 ```
