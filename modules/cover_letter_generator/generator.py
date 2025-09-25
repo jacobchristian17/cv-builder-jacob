@@ -20,11 +20,12 @@ class CoverLetterGenerator:
         use_llm: bool = True,
         temperature: float = 0.7,
         max_tokens: int = 2500,
-        use_web_search: bool = True
+        use_web_search: bool = True,
+        max_word_count: int = 250
     ):
         """
         Initialize the cover letter generator.
-        
+
         Args:
             template_file: Path to HTML template
             output_dir: Directory for output PDFs
@@ -32,20 +33,22 @@ class CoverLetterGenerator:
             temperature: LLM temperature for generation
             max_tokens: Maximum tokens for LLM response
             use_web_search: Whether to use web search for company information
+            max_word_count: Maximum word count for cover letter body (default: 250)
         """
         self.output_dir = Path(output_dir or "output/cover_letters")
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Temp directory for intermediate JSON files
         self._temp_dir = Path("temp/cover_letter_json")
         self._temp_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize the two separate generators
         self.json_generator = CoverLetterJSONGenerator(
             use_llm=use_llm,
             temperature=temperature,
             max_tokens=max_tokens,
-            use_web_search=use_web_search
+            use_web_search=use_web_search,
+            max_word_count=max_word_count
         )
         
         self.pdf_generator = CoverLetterPDFGenerator(
@@ -59,21 +62,25 @@ class CoverLetterGenerator:
         personal_info_path: str = "modules/shared/data/personal_info.json",
         qualifications_path: str = "modules/shared/qualifications/qualifications.json",
         company_info: Optional[Dict] = None,
-        custom_filename: Optional[str] = None
+        custom_filename: Optional[str] = None,
+        score_result: Optional[Dict] = None,
+        cl_add_top: Optional[str] = None
     ) -> str:
         """
         Generate a cover letter PDF using two-step workflow.
-        
+
         Step 1: JSON Generator creates content from LLM
         Step 2: PDF Generator converts JSON to PDF
-        
+
         Args:
             job_description_path: Path to job description file
             personal_info_path: Path to personal info JSON
             qualifications_path: Path to qualifications JSON
             company_info: Optional company details dict
             custom_filename: Optional custom filename for PDF
-            
+            score_result: Optional ATS score results dictionary
+            cl_add_top: Optional string to add to the top of the cover letter
+
         Returns:
             Path to generated PDF file
         """
@@ -82,7 +89,9 @@ class CoverLetterGenerator:
             job_description_path=job_description_path,
             personal_info_path=personal_info_path,
             qualifications_path=qualifications_path,
-            company_info=company_info
+            company_info=company_info,
+            score_result=score_result,
+            cl_add_top=cl_add_top
         )
 
         # Save content to temporary JSON file
@@ -157,9 +166,9 @@ class CoverLetterGenerator:
 # Convenience classes for using generators separately
 class JSONOnly:
     """Use only the JSON generator."""
-    
-    def __init__(self, use_llm: bool = True, temperature: float = 0.7, max_tokens: int = 2500, use_web_search: bool = True):
-        self.generator = CoverLetterJSONGenerator(use_llm, temperature, max_tokens, use_web_search)
+
+    def __init__(self, use_llm: bool = True, temperature: float = 0.7, max_tokens: int = 2500, use_web_search: bool = True, max_word_count: int = 250):
+        self.generator = CoverLetterJSONGenerator(use_llm, temperature, max_tokens, use_web_search, max_word_count)
     
     def generate_content(self, job_description_path: str, **kwargs) -> Dict:
         """Generate cover letter content as dictionary."""

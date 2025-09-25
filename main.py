@@ -3,9 +3,9 @@
 Complete ATS CV Generation and Scoring Workflow
 
 WORKFLOW:
-1. Extract qualifications from job description using qualifications_extractor module
-2. Generate CV with cv_generator module (custom naming and organized output)
-3. Score the generated CV with ats_checker module
+1. Generate CV with cv_generator module (custom naming and organized output)
+2. Score the generated CV with ats_checker module
+3. Generate cover letter with cover_letter_generator module
 
 Usage:
     python workflow.py                    # Uses job.txt by default
@@ -39,7 +39,7 @@ def sanitize_filename(text):
     return sanitized.strip()
 
 
-async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_default=False):
+async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_default=False, word_limit=250, cl_add_top=None):
     """Run the complete workflow"""
     
     print("🚀 STARTING ATS CV WORKFLOW")
@@ -53,7 +53,8 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
     scores_output_dir.mkdir(parents=True, exist_ok=True)
     cover_letter_dir.mkdir(parents=True, exist_ok=True)
     
-    # Step 1: Extract Qualifications (skip if --no-top is used)
+    # First, we need to extract qualifications to get job info for filename
+    # Extract Qualifications (skip if --no-top is used)
     if not no_top:
         try:
             extractor = QualificationsExtractor(num_qualifications=4)
@@ -65,13 +66,13 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
             else:
                 # Extract qualifications (auto-saves to qualifications.json)
                 qualifications = extractor.extract_qualifications(job_file)
-            
+
             # Load saved data to get job info
             quals_file = Path("modules/shared/qualifications/qualifications.json")
             if quals_file.exists():
                 with open(quals_file, 'r', encoding='utf-8') as f:
                     quals_data = json.load(f)
-                
+
                 job_title = quals_data['metadata'].get('job_title', 'Unknown')
                 company_name = quals_data['metadata'].get('company_name', 'Unknown')
                 for qual in quals_data["qualifications"]:
@@ -81,14 +82,14 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
             else:
                 print("❌ Error: Qualifications file not found")
                 return False
-                
+
         except Exception as e:
             print(f"❌ Error in qualifications extraction: {e}")
             return False
     else:
         print("\n⏭️  SKIPPING QUALIFICATIONS EXTRACTION (--no-top mode)")
         print("-" * 40)
-        
+
         # Create empty qualifications file for PDF generation
         quals_data = {
             "qualifications": [],
@@ -97,30 +98,30 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
                 "company_name": "Not specified"
             }
         }
-        
+
         quals_file = Path("modules/shared/qualifications/qualifications.json")
         quals_file.parent.mkdir(parents=True, exist_ok=True)
         with open(quals_file, 'w', encoding='utf-8') as f:
             json.dump(quals_data, f, indent=2)
-        
+
         job_title = "Not specified"
         company_name = "Not specified"
-    
-    # Step 2: Generate CV
+
+    # Step 1: Generate CV
     print("Generating CV...")
-    
+
     try:
         # Load personal info to get person name
         with open("modules/shared/data/personal_info.json", 'r', encoding='utf-8') as f:
             personal_data = json.load(f)
-        
+
         person_name = personal_data['personal_info'].get('name', 'Unknown')
-        
+
         # Create custom filename: {job_title}_{company_name}_{person_name}.pdf
         safe_job_title = sanitize_filename(job_title)
         safe_company = sanitize_filename(company_name)
         safe_person = person_name  # Keep spaces in person name
-        
+
         custom_filename = f"{safe_job_title}_{safe_company}_{safe_person}.pdf"
         
         # Initialize CV generator with root output directory
@@ -141,120 +142,75 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         print(f"❌ Error in CV generation: {e}")
         return False
     
-    # Step 3: Generate Cover Letter (skip if --no-cover-letter is used)
-    cover_letter_path = None
-    if not no_cover_letter:
-        print("Creating cover letter...")
-        # print("-" * 40)
-        
-        try:
-            # Initialize cover letter generator
-            cover_generator = CoverLetterGenerator(
-                output_dir=cover_letter_dir
-            )
-            
-            # Extract company info if available
-            company_info = None
-            if company_name and company_name != 'Not specified':
-                company_info = {
-                    'name': company_name,
-                    'address_line1': '',
-                    'address_line2': '',
-                    'city_state_zip': ''
-                }
-            
-            # Generate cover letter filename
-            cover_letter_filename = f"CoverLetter_{safe_job_title}_{safe_company}_{safe_person}.pdf"
-            
-            
-            # Generate cover letter
-            cover_letter_path = await cover_generator.generate(
-                job_description_path=job_file,
-                personal_info_path="modules/shared/data/personal_info.json",
-                qualifications_path="modules/shared/qualifications/qualifications.json",
-                company_info=company_info,
-                custom_filename=cover_letter_filename
-            )
-            
-            # print(f"✅ Done")
-            # print("-" * 40)
-            
-        except Exception as e:
-            print(f"⚠️ Warning: Cover letter generation failed: {e}")
-            print("   Continuing with workflow...")
-            cover_letter_path = None
-    else:
-        print("\n⏭️ SKIPPING COVER LETTER GENERATION (--no-cover-letter mode)")
-        print("-" * 40)
-    
-    # Step 4: Score CV with ATS Checker
+    # Step 2: Score CV with ATS Checker
     print("Scoring...")
-    
+    score_dict = None  # Initialize score_dict
+
     try:
         # Import ATS checker
         from modules.ats_checker.ats_scorer.scorers.ats_scorer import ATSScorer
-        
+
         # Initialize scorer
         scorer = ATSScorer()
-        
+
         # Parse the generated PDF to extract resume data for scoring
         from modules.ats_checker.ats_scorer.parsers.resume_parser import ResumeParser
-        
+
         pdf_path = pdf_output_dir / custom_filename
         resume_parser = ResumeParser()
-        
+
         try:
             resume_data = resume_parser.parse(str(pdf_path))
         except Exception as parse_error:
             print(f"⚠️  Failed to parse PDF, using personal data: {parse_error}")
             resume_data = personal_data
-        
+
         with open(job_file, 'r', encoding='utf-8') as f:
             job_description = f.read()
-        
+
         # First need to analyze the job description to get job_data
         from modules.ats_checker.ats_scorer.analyzers.job_analyzer import JobAnalyzer
-        
+
         job_analyzer = JobAnalyzer()
         job_data = job_analyzer.analyze(job_description)
-        
+
         # Calculate ATS score using correct method
         score_result = scorer.score(resume_data, job_data)
         print("-" * 40)
         print(f"✅ ATS Score calculated!")
         print(f"📊 Overall Score: {score_result.overall_score}%")
-        
+
         # Display missing items if any
         feedback = score_result.detailed_feedback
         missing_keywords = feedback.get('missing_keywords', [])
         missing_skills = feedback.get('missing_skills', [])
         missing_hard_skills = feedback.get('missing_hard_skills', [])
         missing_soft_skills = feedback.get('missing_soft_skills', [])
-        
+
         if missing_keywords or missing_skills or missing_hard_skills or missing_soft_skills:
             print(f"\n❌ Missing Items:")
-            
+
             if missing_keywords:
                 print(f"   🔑 Missing Keywords ({len(missing_keywords)}):")
                 for keyword in missing_keywords[:10]:  # Show first 10
                     print(f"      - {keyword}")
                 if len(missing_keywords) > 10:
                     print(f"      ... and {len(missing_keywords) - 10} more")
-            
+
             if missing_hard_skills:
                 print(f"   🔧 Missing Hard Skills ({len(missing_hard_skills)}):")
                 for skill in missing_hard_skills[:8]:  # Show first 8
                     print(f"      - {skill}")
                 if len(missing_hard_skills) > 8:
                     print(f"      ... and {len(missing_hard_skills) - 8} more")
-            
+
             if missing_soft_skills:
                 print(f"   🤝 Missing Soft Skills ({len(missing_soft_skills)}):")
                 for skill in missing_soft_skills[:8]:  # Show first 8
                     print(f"      - {skill}")
                 if len(missing_soft_skills) > 8:
                     print(f"      ... and {len(missing_soft_skills) - 8} more")
-            
+
             if missing_skills:
                 print(f"   📋 Missing General Skills ({len(missing_skills)}):")
                 for skill in missing_skills[:5]:  # Show first 5
@@ -263,11 +219,11 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
                     print(f"      ... and {len(missing_skills) - 5} more")
         else:
             print(f"\n✅ No missing keywords or skills detected!")
-        
+
         # Save score report to output/scores directory
         score_filename = custom_filename.replace('.pdf', '_score_report.json')
         score_path = scores_output_dir / score_filename
-        
+
         # Convert ATSScore object to dict for JSON serialization
         score_dict = {
             'overall_score': score_result.overall_score,
@@ -289,15 +245,64 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
             'detailed_feedback': score_result.detailed_feedback,
             'recommendations': score_result.recommendations
         }
-        
+
         with open(score_path, 'w') as f:
             json.dump(score_dict, f, indent=2)
-        
-        
+
+
     except Exception as e:
         print(f"❌ Error in ATS scoring: {e}")
         print("⚠️  CV generated successfully, but scoring failed")
-        return True  # Still consider workflow successful if CV was generated
+        # Continue to cover letter generation even if scoring fails
+
+    # Step 3: Generate Cover Letter (skip if --no-cover-letter is used)
+    cover_letter_path = None
+    if not no_cover_letter:
+        print(f"Creating cover letter (max {word_limit} words)...")
+        # print("-" * 40)
+        
+        try:
+            # Initialize cover letter generator
+            cover_generator = CoverLetterGenerator(
+                output_dir=cover_letter_dir,
+                max_word_count=word_limit
+            )
+            
+            # Extract company info if available
+            company_info = None
+            if company_name and company_name != 'Not specified':
+                company_info = {
+                    'name': company_name,
+                    'address_line1': '',
+                    'address_line2': '',
+                    'city_state_zip': ''
+                }
+            
+            # Generate cover letter filename
+            cover_letter_filename = f"CoverLetter_{safe_job_title}_{safe_company}_{safe_person}.pdf"
+            
+            
+            # Generate cover letter with score results
+            cover_letter_path = await cover_generator.generate(
+                job_description_path=job_file,
+                personal_info_path="modules/shared/data/personal_info.json",
+                qualifications_path="modules/shared/qualifications/qualifications.json",
+                company_info=company_info,
+                custom_filename=cover_letter_filename,
+                score_result=score_dict,
+                cl_add_top=cl_add_top
+            )
+            
+            # print(f"✅ Done")
+            # print("-" * 40)
+            
+        except Exception as e:
+            print(f"⚠️ Warning: Cover letter generation failed: {e}")
+            print("   Continuing with workflow...")
+            cover_letter_path = None
+    else:
+        print("\n⏭️ SKIPPING COVER LETTER GENERATION (--no-cover-letter mode)")
+        print("-" * 40)
     
     print("\n🎉 WORKFLOW COMPLETED SUCCESSFULLY!")
     
@@ -352,6 +357,20 @@ Examples:
         help='Use default qualification examples from prompt.md instead of extracting from job description'
     )
 
+    parser.add_argument(
+        '-w', '--word-limit',
+        type=int,
+        default=250,
+        help='Maximum word count for cover letter body (default: 250)'
+    )
+
+    parser.add_argument(
+        '--cl-add-top', '-CAT',
+        type=str,
+        default=None,
+        help='Add content to the top of the cover letter. If cover letter starts with "I am excited to apply for" and value is "WRITE_IF_HUMAN", prepends the string on a new line before the existing content.'
+    )
+
     args = parser.parse_args()
     
     # Check if job file exists
@@ -364,7 +383,9 @@ Examples:
             args.job_file,
             no_top=args.no_top,
             no_cover_letter=args.no_cover_letter,
-            use_default=args.default
+            use_default=args.default,
+            word_limit=args.word_limit,
+            cl_add_top=args.cl_add_top
         )
         
         if success:

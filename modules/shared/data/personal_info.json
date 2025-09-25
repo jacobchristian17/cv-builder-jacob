@@ -109,7 +109,8 @@
                         "Data visualization",
                         "Product development",
                         "Microservices",
-                        "Unit testing"
+                        "Unit testing",
+                        "Integration testing"
                     ]
                 },
                 {
@@ -134,6 +135,7 @@
                         "Microsoft Azure",
                         "Firebase",
                         "Docker",
+                        "Kubernetes",
                         "NGINX",
                         "Linux",
                         "CI/CD",
@@ -225,8 +227,6 @@
                     "category": "Work Ethics",
                     "skill_list": [
                         "Analytical thinking",
-                        "Visionary",
-                        "Intuitive",
                         "Flexibility",
                         "Innovation",
                         "Self-driven",
@@ -234,7 +234,7 @@
                         "Ability to work independently",
                         "Communication skills",
                         "Adaptability",
-                        "Creativity"
+                        "Creative"
                     ]
                 },
                 {

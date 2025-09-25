@@ -21,19 +21,22 @@ class CoverLetterJSONGenerator:
         use_llm: bool = True,
         temperature: float = 0.7,
         max_tokens: int = 2500,
-        use_web_search: bool = True
+        use_web_search: bool = True,
+        max_word_count: int = 250
     ):
         """
         Initialize the JSON content generator.
-        
+
         Args:
             use_llm: Whether to use LLM for content generation
             temperature: LLM temperature for generation
             max_tokens: Maximum tokens for LLM response
             use_web_search: Whether to use web search for company information
+            max_word_count: Maximum word count for the cover letter body (default: 250)
         """
         self.use_llm = use_llm
         self.use_web_search = use_web_search
+        self.max_word_count = max_word_count
         self.prompt_file = Path(__file__).parent / "prompt.md"
         
         if self.use_llm:
@@ -207,17 +210,21 @@ class CoverLetterJSONGenerator:
         job_description_path: str,
         personal_info_path: str = "modules/shared/data/personal_info.json",
         qualifications_path: str = "modules/shared/qualifications/qualifications.json",
-        company_info: Optional[Dict] = None
+        company_info: Optional[Dict] = None,
+        score_result: Optional[Dict] = None,
+        cl_add_top: Optional[str] = None
     ) -> Dict:
         """
         Generate cover letter content as structured data.
-        
+
         Args:
             job_description_path: Path to job description file
             personal_info_path: Path to personal info JSON
             qualifications_path: Path to qualifications JSON
             company_info: Optional company details dict
-            
+            score_result: Optional ATS score results dictionary
+            cl_add_top: Optional string to add to the top of the cover letter
+
         Returns:
             Dictionary with cover letter content
         """
@@ -248,16 +255,54 @@ class CoverLetterJSONGenerator:
                 job_description,
                 personal_info,
                 qualifications,
-                company_info
+                company_info,
+                score_result,
+                cl_add_top
             )
         else:
             return self._generate_basic(
                 job_description,
                 personal_info,
                 qualifications,
-                company_info
+                company_info,
+                score_result,
+                cl_add_top
             )
-    
+
+    def _apply_cl_add_top(self, content: Dict, cl_add_top: str) -> Dict:
+        """
+        Apply cl_add_top logic to prepend content to cover letter.
+
+        Args:
+            content: The generated cover letter content dict
+            cl_add_top: The string to prepend
+
+        Returns:
+            Modified content dict with prepended content
+        """
+        if not cl_add_top or not content.get('paragraphs'):
+            return content
+
+        paragraphs = content['paragraphs']
+
+        # Check if first paragraph starts with "I am excited to apply for"
+        if paragraphs and paragraphs[0].strip().startswith("I am excited to apply for"):
+            # If cl_add_top is "WRITE_IF_HUMAN", prepend it on a new line
+            if cl_add_top == "WRITE_IF_HUMAN":
+                paragraphs[0] = f"{cl_add_top}\n\n{paragraphs[0]}"
+            else:
+                # For any other string, prepend it on a new line
+                paragraphs[0] = f"{cl_add_top}\n\n{paragraphs[0]}"
+        else:
+            # If doesn't start with "I am excited to apply for", just prepend to first paragraph
+            if paragraphs:
+                paragraphs[0] = f"{cl_add_top}\n\n{paragraphs[0]}"
+            else:
+                # If no paragraphs, create one with the prepended content
+                content['paragraphs'] = [cl_add_top]
+
+        return content
+
     def save_to_json(
         self,
         content: Dict,
@@ -288,27 +333,238 @@ class CoverLetterJSONGenerator:
         
         return str(output_path)
     
+    def _count_words(self, text: str) -> int:
+        """Count words in a text string."""
+        # Remove extra whitespace and split by whitespace
+        words = text.split()
+        return len(words)
+
+    def _clean_json_string(self, json_str: str) -> str:
+        """
+        Clean and fix common JSON formatting issues in LLM response.
+
+        Args:
+            json_str: Raw JSON string from LLM
+
+        Returns:
+            Cleaned JSON string
+        """
+        # Remove any text before the first { and after the last }
+        json_str = json_str.strip()
+
+        # Fix common issues
+        # 1. Remove trailing commas in arrays
+        json_str = re.sub(r',(\s*])', r'\1', json_str)
+
+        # 2. Remove trailing commas in objects
+        json_str = re.sub(r',(\s*})', r'\1', json_str)
+
+        # 3. Fix double commas
+        json_str = re.sub(r',\s*,', ',', json_str)
+
+        # 4. Remove any non-JSON content after the closing brace
+        # Find the last closing brace that matches the opening
+        brace_count = 0
+        last_valid_pos = -1
+        for i, char in enumerate(json_str):
+            if char == '{':
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    last_valid_pos = i + 1
+                    break
+
+        if last_valid_pos > 0:
+            json_str = json_str[:last_valid_pos]
+
+        # 5. Ensure strings are properly escaped
+        # Fix unescaped quotes within string values (but careful not to break the JSON structure)
+        # This is complex, so we'll rely on json.loads to catch these
+
+        return json_str
+
+    def _extract_and_parse_json(self, response: str) -> Optional[Dict]:
+        """
+        Extract and parse JSON from LLM response with error handling.
+
+        Args:
+            response: Raw LLM response
+
+        Returns:
+            Parsed JSON dictionary or None if parsing fails
+        """
+        # Strategy 1: Try to find JSON block with regex
+        json_patterns = [
+            r'\{[^{}]*"paragraphs"\s*:\s*\[[^\]]+\][^{}]*\}',  # Simple pattern
+            r'\{.*?"paragraphs".*?\}(?=\s*$|\s*\n)',  # Match until end
+            r'\{.*\}',  # Most general pattern
+        ]
+
+        for pattern in json_patterns:
+            matches = re.findall(pattern, response, re.DOTALL)
+            for match in matches:
+                try:
+                    # Clean the JSON string
+                    cleaned_json = self._clean_json_string(match)
+
+                    # Try to parse
+                    result = json.loads(cleaned_json)
+
+                    # Validate required fields
+                    if 'paragraphs' in result and isinstance(result['paragraphs'], list):
+                        return result
+                except json.JSONDecodeError as e:
+                    print(f"   ⚠️  JSON parse attempt failed: {e}")
+                    continue
+
+        # Strategy 2: Try to extract components and reconstruct
+        try:
+            # Extract paragraphs array
+            para_match = re.search(r'"paragraphs"\s*:\s*\[(.*?)\]', response, re.DOTALL)
+            if para_match:
+                para_content = para_match.group(1)
+
+                # Clean up paragraph content
+                # Split by quotes and reconstruct
+                paragraphs = []
+                para_strings = re.findall(r'"([^"]*)"', para_content)
+                for para in para_strings:
+                    if para.strip() and len(para) > 20:  # Filter out small fragments
+                        paragraphs.append(para)
+
+                if len(paragraphs) >= 3:
+                    # Extract other fields
+                    salutation = "Dear Hiring Manager,"
+                    sal_match = re.search(r'"salutation"\s*:\s*"([^"]*)"', response)
+                    if sal_match:
+                        salutation = sal_match.group(1)
+
+                    closing = "Best regards,"
+                    close_match = re.search(r'"closing"\s*:\s*"([^"]*)"', response)
+                    if close_match:
+                        closing = close_match.group(1)
+
+                    # Reconstruct clean JSON
+                    reconstructed = {
+                        "paragraphs": paragraphs[:3],  # Ensure only 3 paragraphs
+                        "salutation": salutation,
+                        "closing": closing,
+                        "company_info": {
+                            "name": None,
+                            "address_line1": None,
+                            "address_line2": None,
+                            "city_state_zip": None
+                        }
+                    }
+
+                    print("   ✅ Successfully reconstructed JSON from components")
+                    return reconstructed
+        except Exception as e:
+            print(f"   ⚠️  JSON reconstruction failed: {e}")
+
+        return None
+
+    def _validate_and_trim_paragraphs(self, paragraphs: List[str], max_words: int = 250) -> List[str]:
+        """
+        Validate and trim paragraphs to stay within word limit.
+
+        Args:
+            paragraphs: List of paragraph strings
+            max_words: Maximum allowed word count (default: 250)
+
+        Returns:
+            List of trimmed paragraphs
+        """
+        # Count total words
+        total_text = " ".join(paragraphs)
+        word_count = self._count_words(total_text)
+
+        print(f"   📊 Initial word count: {word_count} words")
+
+        if word_count <= max_words:
+            print(f"   ✅ Within limit of {max_words} words")
+            return paragraphs
+
+        print(f"   ⚠️  Exceeds limit by {word_count - max_words} words. Trimming...")
+
+        # Strategy: Proportionally trim each paragraph
+        trimmed_paragraphs = []
+        target_ratio = max_words / word_count
+
+        for i, paragraph in enumerate(paragraphs):
+            para_words = self._count_words(paragraph)
+            target_words = int(para_words * target_ratio * 0.95)  # 95% to ensure we're under limit
+
+            if para_words > target_words:
+                # Split into sentences and trim
+                sentences = paragraph.split('. ')
+                trimmed_para = []
+                current_count = 0
+
+                for sentence in sentences:
+                    sentence_words = self._count_words(sentence)
+                    if current_count + sentence_words <= target_words:
+                        trimmed_para.append(sentence)
+                        current_count += sentence_words
+                    else:
+                        # Try to include partial sentence if space allows
+                        remaining = target_words - current_count
+                        if remaining > 10:  # Only include if we have decent space
+                            words = sentence.split()[:remaining]
+                            if words:
+                                partial = ' '.join(words)
+                                # Ensure it ends properly
+                                if not partial.endswith('.'):
+                                    partial += '.'
+                                trimmed_para.append(partial)
+                        break
+
+                trimmed_text = '. '.join(trimmed_para)
+                if not trimmed_text.endswith('.'):
+                    trimmed_text += '.'
+                trimmed_paragraphs.append(trimmed_text)
+            else:
+                trimmed_paragraphs.append(paragraph)
+
+        # Final validation
+        final_count = self._count_words(" ".join(trimmed_paragraphs))
+        print(f"   📊 Final word count: {final_count} words")
+
+        if final_count > max_words:
+            # Emergency trim - remove words from the last paragraph
+            excess = final_count - max_words
+            last_para_words = trimmed_paragraphs[-1].split()
+            if len(last_para_words) > excess:
+                trimmed_paragraphs[-1] = ' '.join(last_para_words[:-excess]) + '.'
+                final_count = self._count_words(" ".join(trimmed_paragraphs))
+                print(f"   📊 After emergency trim: {final_count} words")
+
+        return trimmed_paragraphs
+
     def _generate_with_llm(
         self,
         job_description: str,
         personal_info: Dict,
         qualifications: Optional[Dict],
-        company_info: Optional[Dict]
+        company_info: Optional[Dict],
+        score_result: Optional[Dict] = None,
+        cl_add_top: Optional[str] = None
     ) -> Dict:
         """Generate cover letter content using LLM."""
-        
+
         # Extract relevant information
         person_data = personal_info.get('personal_info', {})
         work_info = personal_info.get('work_info', {})
         skills = work_info.get('skills', {})
         experience = work_info.get('experience', [])
-        
+
         # Prepare qualifications text
         qual_text = ""
         if qualifications and qualifications.get('qualifications'):
             qual_items = [q['text'] for q in qualifications['qualifications']]
             qual_text = "\n".join([f"- {q}" for q in qual_items])
-        
+
         # Prepare experience summary
         exp_summary = []
         for exp in experience[:2]:  # Use top 2 experiences
@@ -317,15 +573,17 @@ class CoverLetterJSONGenerator:
             for feature in features:
                 exp_summary.append(f"  - {feature}")
         exp_text = "\n".join(exp_summary)
-        
+
         # Load custom system prompt from prompt.md
         system_prompt = self._load_prompt_template()
-        
+
         # Add JSON output format instruction to ensure proper response format
-        system_prompt += """
-        
+        system_prompt += f"""
+
+        STRICT WORD LIMIT: The ENTIRE cover letter body (all paragraphs combined) must be MAXIMUM {self.max_word_count} WORDS.
+
         Return ONLY valid JSON in this exact format:
-        {
+        {{
             "paragraphs": [
                 "First paragraph text...",
                 "Second paragraph text...",
@@ -333,23 +591,54 @@ class CoverLetterJSONGenerator:
             ],
             "salutation": "Dear Hiring Manager," or specific name if known,
             "closing": "Best regards," or "Sincerely,",
-            "company_info": {
+            "company_info": {{
                 "name": "Extract company name from job description",
                 "address_line1": "Extract street address if mentioned",
-                "address_line2": "Extract suite/floor if mentioned", 
+                "address_line2": "Extract suite/floor if mentioned",
                 "city_state_zip": "Extract city, state, zip if mentioned"
-            }
-        }
-        
+            }}
+        }}
+
         CRITICAL RULES:
-        1. If no company name can be identified, set company_info.name to null
-        2. When company name is null or unknown, NEVER use phrases like "your company", "your organization", "your esteemed organization", "your team" in the paragraphs
-        3. Instead use "this role", "this position", "this opportunity", or avoid company references entirely
-        4. Focus on the role requirements and technical challenges when company is unknown
-        5. NEVER mention what information you couldn't find - do not say things like "Although I couldn't find specific information" or "I couldn't locate"
-        6. NEVER apologize for missing information - simply write based on what you have
-        7. When company research is unavailable, focus entirely on the role and your qualifications"""
+        1. WORD LIMIT: The combined text of all paragraphs MUST NOT exceed {self.max_word_count} words total
+        2. Be concise and impactful - every word must count
+        3. If no company name can be identified, set company_info.name to null
+        4. When company name is null or unknown, NEVER use phrases like "your company", "your organization", "your esteemed organization", "your team" in the paragraphs
+        5. Instead use "this role", "this position", "this opportunity", or avoid company references entirely
+        6. Focus on the role requirements and technical challenges when company is unknown
+        7. NEVER mention what information you couldn't find - do not say things like "Although I couldn't find specific information" or "I couldn't locate"
+        8. NEVER apologize for missing information - simply write based on what you have
+        9. When company research is unavailable, focus entirely on the role and your qualifications
+
+        JSON FORMAT REQUIREMENTS:
+        - ONLY return valid JSON, no other text before or after
+        - NO trailing commas in arrays or objects
+        - Ensure all strings are properly quoted
+        - Arrays must have exactly 3 paragraph strings
+        - Each paragraph must be a complete, properly formatted string
+        - Do NOT include comments or explanations in the JSON
+        - Example of CORRECT format:
+          {{
+            "paragraphs": ["Para 1", "Para 2", "Para 3"],
+            "salutation": "Dear Hiring Manager,",
+            "closing": "Best regards,"
+          }}
+        - Example of INCORRECT format (has trailing comma):
+          {{
+            "paragraphs": ["Para 1", "Para 2", "Para 3",],  ← WRONG: trailing comma
+          }}"""
         
+        # Add ATS Score information if available
+        score_info = ""
+        if score_result:
+            score_info = f"""
+**ATS SCORE ANALYSIS:**
+- Overall Score: {score_result.get('overall_score', 'N/A')}%
+- Missing Keywords: {', '.join(score_result.get('missing_items', {}).get('missing_keywords', [])[:5]) if score_result.get('missing_items', {}).get('missing_keywords') else 'None'}
+- Missing Hard Skills: {', '.join(score_result.get('missing_items', {}).get('missing_hard_skills', [])[:5]) if score_result.get('missing_items', {}).get('missing_hard_skills') else 'None'}
+- Key Strengths: Focus on highlighting existing matched skills and experience
+"""
+
         # Format input according to prompt.md template
         prompt = f"""
 **CANDIDATE INFORMATION:**
@@ -360,6 +649,7 @@ class CoverLetterJSONGenerator:
 - Notable Achievements: {self._format_achievements(experience)}
 - Leadership Experience: {self._extract_leadership(experience)}
 - Specialized Experience: {self._extract_specialized_skills(skills)}
+{score_info}
 
 **JOB DETAILS:**
 - Position Title: [Extract from job description]
@@ -389,6 +679,11 @@ class CoverLetterJSONGenerator:
 
 Generate a 3-paragraph cover letter following the structure defined in the system prompt.
 
+**CRITICAL CONSTRAINTS:**
+- MAXIMUM {self.max_word_count} WORDS total across all 3 paragraphs combined
+- Be extremely concise - focus on most impactful qualifications only
+- Each paragraph should be approximately {self.max_word_count // 3} words to stay within limit
+
 **OUTPUT RULES:**
 - Strictly return answer in JSON format only
 
@@ -396,10 +691,11 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
         
         try:
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
-            # Parse JSON response
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
-            if json_match:
-                letter_content = json.loads(json_match.group())
+
+            # Use improved JSON extraction and parsing
+            letter_content = self._extract_and_parse_json(response)
+
+            if letter_content:
                 
                 # Extract company info from LLM response if present
                 llm_company_info = letter_content.get('company_info', {})
@@ -431,17 +727,34 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
                         'city_state_zip': None
                     }
 
+                # Apply word count validation and trimming
+                raw_paragraphs = letter_content.get('paragraphs', [])
+                validated_paragraphs = self._validate_and_trim_paragraphs(raw_paragraphs, max_words=self.max_word_count)
+
                 # Prepare final data structure
-                return {
+                content = {
                     'personal_info': person_data,
                     'company_info': final_company_info,
-                    'paragraphs': letter_content.get('paragraphs', []),
+                    'paragraphs': validated_paragraphs,
                     'salutation': letter_content.get('salutation', 'Dear Hiring Manager,'),
                     'closing': letter_content.get('closing', 'Thank you and best regards,')
                 }
+
+                # Apply cl_add_top logic if specified
+                if cl_add_top:
+                    content = self._apply_cl_add_top(content, cl_add_top)
+
+                return content
+            else:
+                print("   ⚠️  Failed to parse LLM response as valid JSON")
+                print(f"   📝 Raw response preview: {response[:200]}...")
+        except json.JSONDecodeError as e:
+            print(f"   ❌ JSON parsing error: {e}")
+            print(f"   📝 Problematic area: {e.doc[max(0, e.pos-50):e.pos+50] if hasattr(e, 'doc') and hasattr(e, 'pos') else 'N/A'}")
         except Exception as e:
-            print(f"LLM generation failed: {e}, using basic template...")
-        
+            print(f"   ❌ LLM generation failed: {e}")
+
+        print("   ⚠️  Falling back to basic template...")
         return self._generate_basic(job_description, personal_info, qualifications, company_info)
     
     def _generate_basic(
@@ -449,7 +762,9 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
         job_description: str,
         personal_info: Dict,
         qualifications: Optional[Dict],
-        company_info: Optional[Dict]
+        company_info: Optional[Dict],
+        score_result: Optional[Dict] = None,
+        cl_add_top: Optional[str] = None
     ) -> Dict:
         """Generate basic cover letter without LLM."""
 
@@ -513,13 +828,19 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
         if company_info:
             fallback_company_info.update(company_info)
         
-        return {
+        content = {
             'personal_info': person_data,
             'company_info': fallback_company_info,
             'paragraphs': paragraphs,
             'salutation': 'Dear Hiring Manager,',
             'closing': 'Thank you and best regards,'
         }
+
+        # Apply cl_add_top logic if specified
+        if cl_add_top:
+            content = self._apply_cl_add_top(content, cl_add_top)
+
+        return content
     
     def _extract_company_info(self, job_description: str) -> Dict:
         """Extract company information from job description."""
