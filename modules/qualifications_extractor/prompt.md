@@ -16,7 +16,8 @@ Analyze the provided job description and extract the top 4 matching qualificatio
 ## Rules
 - Find exactly 4 qualifications from the applicant's JSON profile
 - Each qualification should be one concise sentence
-- Avoid repeating project details; summarize relevant projects instead of copying content
+- **IMPORTANT**: Only use "work_info.experience" section when referencing projects or work-related achievements
+- Avoid repeating project details; summarize relevant projects from "work_info.experience" instead of copying content
 - Only use information that exists in the provided JSON data
 - Do not fabricate or add non-existent information
 - Qualification description should be more than 10 words and not more than 20 words

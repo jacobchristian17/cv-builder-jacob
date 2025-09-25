@@ -52,11 +52,9 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
     pdf_output_dir.mkdir(parents=True, exist_ok=True)
     scores_output_dir.mkdir(parents=True, exist_ok=True)
     cover_letter_dir.mkdir(parents=True, exist_ok=True)
-    print(f"📁 Created output directories: {pdf_output_dir}, {scores_output_dir}, {cover_letter_dir}")
     
     # Step 1: Extract Qualifications (skip if --no-top is used)
     if not no_top:
-        print("\n Extracting qualifications...")
         try:
             extractor = QualificationsExtractor(num_qualifications=4)
 
@@ -76,7 +74,9 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
                 
                 job_title = quals_data['metadata'].get('job_title', 'Unknown')
                 company_name = quals_data['metadata'].get('company_name', 'Unknown')
-                print(f"✅ Done")
+                for qual in quals_data["qualifications"]:
+                    print(f"  > {qual["text"]}")
+                print(f"\n✅ {job_title} at {company_name}")
                 print("-" * 40)
             else:
                 print("❌ Error: Qualifications file not found")
@@ -107,7 +107,7 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         company_name = "Not specified"
     
     # Step 2: Generate CV
-    print("\nGenerating CV...")
+    print("Generating CV...")
     
     try:
         # Load personal info to get person name
@@ -134,8 +134,8 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         
         # Generate CV
         output_path = await generator.run(custom_filename)
-        print(f"✅ Done")
-        print("-" * 40)
+        # print(f"✅ Done")
+        # print("-" * 40)
         
     except Exception as e:
         print(f"❌ Error in CV generation: {e}")
@@ -144,8 +144,8 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
     # Step 3: Generate Cover Letter (skip if --no-cover-letter is used)
     cover_letter_path = None
     if not no_cover_letter:
-        print("\nCreating cover letter...")
-        print("-" * 40)
+        print("Creating cover letter...")
+        # print("-" * 40)
         
         try:
             # Initialize cover letter generator
@@ -176,8 +176,8 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
                 custom_filename=cover_letter_filename
             )
             
-            print(f"✅ Done")
-            print("-" * 40)
+            # print(f"✅ Done")
+            # print("-" * 40)
             
         except Exception as e:
             print(f"⚠️ Warning: Cover letter generation failed: {e}")
@@ -188,7 +188,7 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         print("-" * 40)
     
     # Step 4: Score CV with ATS Checker
-    print("\nScoring...")
+    print("Scoring...")
     
     try:
         # Import ATS checker
@@ -196,9 +196,6 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         
         # Initialize scorer
         scorer = ATSScorer()
-        
-        # Score the generated CV against the job description
-        print(f"🔍 Scoring {custom_filename} against {job_file}")
         
         # Parse the generated PDF to extract resume data for scoring
         from modules.ats_checker.ats_scorer.parsers.resume_parser import ResumeParser
@@ -223,7 +220,7 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
         
         # Calculate ATS score using correct method
         score_result = scorer.score(resume_data, job_data)
-        
+        print("-" * 40)
         print(f"✅ ATS Score calculated!")
         print(f"📊 Overall Score: {score_result.overall_score}%")
         
@@ -344,13 +341,13 @@ Examples:
     )
     
     parser.add_argument(
-        '--no-cover-letter',
+        '-N', '--no-cover-letter',
         action='store_true',
         help='Skip cover letter generation'
     )
 
     parser.add_argument(
-        '--default',
+        '-D', '--default',
         action='store_true',
         help='Use default qualification examples from prompt.md instead of extracting from job description'
     )

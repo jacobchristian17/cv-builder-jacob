@@ -105,37 +105,45 @@ class CoverLetterGenerator:
     
     def _create_temp_filename(self, content: Dict, custom_filename: Optional[str]) -> str:
         """Create filename for temporary JSON file."""
-        
+
         if custom_filename:
             base_name = custom_filename.replace('.pdf', '')
             return f"temp_{base_name}_{datetime.now().strftime('%H%M%S')}.json"
-        
+
         # Generate from content
         person_name = content.get('personal_info', {}).get('name', 'Unknown')
-        company_name = content.get('company_info', {}).get('name', 'Company')
-        
+        company_name = content.get('company_info', {}).get('name')
+
         # Clean names for filename
         person_clean = re.sub(r'[^\w\s-]', '', person_name).strip().replace(' ', '')
-        company_clean = re.sub(r'[^\w\s-]', '', company_name).strip().replace(' ', '')
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        return f"temp_cover_{company_clean}_{person_clean}_{timestamp}.json"
+
+        # Include company name only if valid
+        if company_name and company_name not in ['Company', '[Company Name]', '']:
+            company_clean = re.sub(r'[^\w\s-]', '', company_name).strip().replace(' ', '')
+            return f"temp_cover_{company_clean}_{person_clean}_{timestamp}.json"
+        else:
+            return f"temp_cover_{person_clean}_{timestamp}.json"
     
     def _create_pdf_filename(self, content: Dict, custom_filename: Optional[str]) -> str:
         """Create filename for PDF output."""
-        
+
         if custom_filename:
             return custom_filename if custom_filename.endswith('.pdf') else f"{custom_filename}.pdf"
-        
+
         # Generate from content
         person_name = content.get('personal_info', {}).get('name', 'Unknown')
-        company_name = content.get('company_info', {}).get('name', 'Company')
-        
+        company_name = content.get('company_info', {}).get('name')
+
         # Clean names for filename
         person_clean = re.sub(r'[^\w\s-]', '', person_name).strip()
-        company_clean = re.sub(r'[^\w\s-]', '', company_name).strip().replace(' ', '')
-        
-        return f"CoverLetter_{company_clean}_{person_clean}.pdf"
+
+        # Include company name only if valid
+        if company_name and company_name not in ['Company', '[Company Name]', '']:
+            company_clean = re.sub(r'[^\w\s-]', '', company_name).strip().replace(' ', '')
+            return f"CoverLetter_{company_clean}_{person_clean}.pdf"
+        else:
+            return f"CoverLetter_{person_clean}.pdf"
     
     def _cleanup_temp_file(self, temp_path: Path) -> None:
         """Remove temporary JSON file."""

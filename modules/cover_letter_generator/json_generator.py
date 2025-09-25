@@ -345,7 +345,10 @@ class CoverLetterJSONGenerator:
         1. If no company name can be identified, set company_info.name to null
         2. When company name is null or unknown, NEVER use phrases like "your company", "your organization", "your esteemed organization", "your team" in the paragraphs
         3. Instead use "this role", "this position", "this opportunity", or avoid company references entirely
-        4. Focus on the role requirements and technical challenges when company is unknown"""
+        4. Focus on the role requirements and technical challenges when company is unknown
+        5. NEVER mention what information you couldn't find - do not say things like "Although I couldn't find specific information" or "I couldn't locate"
+        6. NEVER apologize for missing information - simply write based on what you have
+        7. When company research is unavailable, focus entirely on the role and your qualifications"""
         
         # Format input according to prompt.md template
         prompt = f"""
@@ -371,12 +374,8 @@ class CoverLetterJSONGenerator:
 - Company Culture: {company_info.get('culture', '[Research from web if available]') if company_info else '[Research from web if available]'}
 - Special Requirements: [Any unique requirements from job description]
 
-**WEB-RESEARCHED COMPANY INFORMATION:**
-{f"Mission: {company_info.get('mission', 'Not found')}" if company_info and company_info.get('mission') else "Mission: Not available"}
-{f"Vision: {company_info.get('vision', 'Not found')}" if company_info and company_info.get('vision') else "Vision: Not available"}  
-{f"Values: {company_info.get('values', 'Not found')}" if company_info and company_info.get('values') else "Values: Not available"}
-{f"Culture: {company_info.get('culture', 'Not found')}" if company_info and company_info.get('culture') else "Culture: Not available"}
-{f"Address: {company_info.get('address_line1', '')}, {company_info.get('city_state_zip', '')}" if company_info and (company_info.get('address_line1') or company_info.get('city_state_zip')) else "Address: Not available"}
+**COMPANY RESEARCH (if available):**
+{self._format_company_research(company_info)}
 
 **JOB DESCRIPTION:**
 {job_description[:2500]}
@@ -385,7 +384,8 @@ class CoverLetterJSONGenerator:
 - Industry: Technology/Software Development
 - Work Environment: [Determine from job description]
 - Specific Interests: Contribution to innovative technology solutions and team collaboration
-- Use web-researched company information above to demonstrate authentic alignment with company values and culture
+- When writing: If company research is present, incorporate it naturally. If not present, focus solely on the role and technical fit
+- Remember: NEVER mention inability to find information - write confidently based on available data
 
 Generate a 3-paragraph cover letter following the structure defined in the system prompt.
 
@@ -401,10 +401,40 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
             if json_match:
                 letter_content = json.loads(json_match.group())
                 
+                # Extract company info from LLM response if present
+                llm_company_info = letter_content.get('company_info', {})
+
+                # Use existing company_info or create from LLM response
+                final_company_info = company_info or {}
+
+                # Update with LLM extracted info if available
+                if llm_company_info:
+                    if not final_company_info.get('name') and llm_company_info.get('name'):
+                        # Only use LLM company name if it's not a placeholder
+                        llm_name = llm_company_info.get('name')
+                        if llm_name and llm_name not in ['null', 'None', '[Extract from job description]', '']:
+                            final_company_info['name'] = llm_name
+
+                    # Update address fields if available
+                    for field in ['address_line1', 'address_line2', 'city_state_zip']:
+                        if not final_company_info.get(field) and llm_company_info.get(field):
+                            value = llm_company_info.get(field)
+                            if value and value not in ['null', 'None', '[Extract from job description]', '']:
+                                final_company_info[field] = value
+
+                # Clean up company_info - set to None if no valid name
+                if not final_company_info.get('name') or final_company_info.get('name') in ['null', 'None', '', '[Extract from job description]']:
+                    final_company_info = {
+                        'name': None,
+                        'address_line1': None,
+                        'address_line2': None,
+                        'city_state_zip': None
+                    }
+
                 # Prepare final data structure
                 return {
                     'personal_info': person_data,
-                    'company_info': company_info or self._extract_company_info(job_description),
+                    'company_info': final_company_info,
                     'paragraphs': letter_content.get('paragraphs', []),
                     'salutation': letter_content.get('salutation', 'Dear Hiring Manager,'),
                     'closing': letter_content.get('closing', 'Thank you and best regards,')
@@ -422,39 +452,52 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
         company_info: Optional[Dict]
     ) -> Dict:
         """Generate basic cover letter without LLM."""
-        
+
         person_data = personal_info.get('personal_info', {})
         work_info = personal_info.get('work_info', {})
-        
+
         # Extract job title from qualifications or job description
         job_title = "the position"
         if qualifications and qualifications.get('metadata'):
             job_title = qualifications['metadata'].get('job_title', job_title)
-        
-        company_name = "your company"
+
+        company_name = None
         if company_info and company_info.get('name'):
             company_name = company_info['name']
         elif qualifications and qualifications.get('metadata'):
-            company_name = qualifications['metadata'].get('company_name', company_name)
-        
-        # Generate basic paragraphs
-        paragraphs = [
-            f"I am excited to apply for {job_title} at {company_name}. With my background in software development and proven track record of delivering quality solutions, I am confident I would be a valuable addition to your team.",
-            
-            f"My technical expertise aligns well with your requirements. I have extensive experience with modern development technologies and have successfully delivered multiple projects that demonstrate my ability to build scalable, maintainable solutions.",
-            
-            f"Throughout my career, I have consistently delivered results by combining technical excellence with strong problem-solving skills. I excel at working in collaborative environments and have a proven ability to adapt quickly to new technologies and challenges.",
-            
-            f"I am eager to bring my skills and experience to {company_name} and contribute to your continued success. I look forward to the opportunity to discuss how my background aligns with your needs."
-        ]
+            company_name = qualifications['metadata'].get('company_name', None)
+
+        # Generate paragraphs based on whether we have a company name
+        if company_name and company_name not in ['your company', 'the company', '[Company Name]', '']:
+            # Paragraphs with company name
+            paragraphs = [
+                f"I am excited to apply for {job_title} at {company_name}. With my background in software development and proven track record of delivering quality solutions, I am confident I would be a valuable addition to your team.",
+
+                f"My technical expertise aligns well with your requirements. I have extensive experience with modern development technologies and have successfully delivered multiple projects that demonstrate my ability to build scalable, maintainable solutions.",
+
+                f"Throughout my career, I have consistently delivered results by combining technical excellence with strong problem-solving skills. I excel at working in collaborative environments and have a proven ability to adapt quickly to new technologies and challenges.",
+
+                f"I am eager to bring my skills and experience to {company_name} and contribute to your continued success. I look forward to the opportunity to discuss how my background aligns with your needs."
+            ]
+        else:
+            # Paragraphs without company name - avoid generic references
+            paragraphs = [
+                f"I am excited to apply for {job_title}. With my background in software development and proven track record of delivering quality solutions, I am confident I would be a valuable addition to the team.",
+
+                f"My technical expertise aligns well with the requirements. I have extensive experience with modern development technologies and have successfully delivered multiple projects that demonstrate my ability to build scalable, maintainable solutions.",
+
+                f"Throughout my career, I have consistently delivered results by combining technical excellence with strong problem-solving skills. I excel at working in collaborative environments and have a proven ability to adapt quickly to new technologies and challenges.",
+
+                f"I am eager to bring my skills and experience to this role and contribute to its success. I look forward to the opportunity to discuss how my background aligns with the position's needs."
+            ]
         
         # Create company_info with address structure
         # Only include company_name if it's not a generic placeholder
-        if company_name and company_name not in ['your company', 'the company', '[Company Name]']:
+        if company_name and company_name not in ['your company', 'the company', '[Company Name]', '']:
             fallback_company_info = {
                 'name': company_name,
                 'address_line1': None,
-                'address_line2': None, 
+                'address_line2': None,
                 'city_state_zip': None
             }
         else:
@@ -462,7 +505,7 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
             fallback_company_info = {
                 'name': None,
                 'address_line1': None,
-                'address_line2': None, 
+                'address_line2': None,
                 'city_state_zip': None
             }
         
@@ -548,11 +591,46 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
     
     def _extract_years_experience(self, summary: str) -> str:
         """Extract years of experience from summary."""
-        
+
         match = re.search(r'(\d+)\+?\s*years?', summary, re.I)
         if match:
             return f"{match.group(1)}+ years"
         return "several years"
+
+    def _format_company_research(self, company_info: Optional[Dict]) -> str:
+        """Format company research information for the prompt."""
+        if not company_info:
+            return "No additional company information available - focus on role requirements and technical fit."
+
+        research_items = []
+
+        # Only add items that have actual values (not None, empty, or placeholder)
+        if company_info.get('mission') and company_info['mission'] not in ['Not found', 'Not available', None, '']:
+            research_items.append(f"Mission: {company_info['mission']}")
+
+        if company_info.get('vision') and company_info['vision'] not in ['Not found', 'Not available', None, '']:
+            research_items.append(f"Vision: {company_info['vision']}")
+
+        if company_info.get('values') and company_info['values'] not in ['Not found', 'Not available', None, '']:
+            research_items.append(f"Values: {company_info['values']}")
+
+        if company_info.get('culture') and company_info['culture'] not in ['Not found', 'Not available', None, '']:
+            research_items.append(f"Culture: {company_info['culture']}")
+
+        # Add address if available
+        address_parts = []
+        if company_info.get('address_line1') and company_info['address_line1'] not in ['Not found', 'Not available', None, '']:
+            address_parts.append(company_info['address_line1'])
+        if company_info.get('city_state_zip') and company_info['city_state_zip'] not in ['Not found', 'Not available', None, '']:
+            address_parts.append(company_info['city_state_zip'])
+
+        if address_parts:
+            research_items.append(f"Address: {', '.join(address_parts)}")
+
+        if research_items:
+            return '\n'.join(research_items)
+        else:
+            return "No additional company information available - focus on role requirements and technical fit."
     
     def _format_skills(self, hard_skills: List[Dict]) -> str:
         """Format technical skills for prompt."""

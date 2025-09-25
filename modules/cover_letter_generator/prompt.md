@@ -9,6 +9,9 @@ CRITICAL OUTPUT RULES:
 3. When company name is null or unknown, NEVER use phrases like "your company", "your organization", "your esteemed organization", "your team" in the paragraphs
 4. Instead use "this role", "this position", "this opportunity", or avoid company references entirely
 5. Focus on the role requirements and technical challenges when company is unknown
+6. NEVER mention what information you couldn't find - do not say things like "Although I couldn't find specific information" or "I couldn't locate"
+7. NEVER apologize for missing information - simply write based on what you have
+8. When company research is unavailable, focus entirely on the role and your qualifications
 
 IMPORTANT: If no specific company name is identified (indicated by null, empty, or placeholder values like "[Company Name]"), write the letter without referring to a specific company. Instead, focus on the role and responsibilities without mentioning company names or using phrases like "your company" or "your organization".
 
@@ -28,11 +31,12 @@ IMPORTANT: If no specific company name is identified (indicated by null, empty, 
 ### Paragraph 3: Company Alignment & Professional Closing
 - If company is known: Express genuine interest in the company's mission, values, or specific aspects
 - If company is unknown: Focus on enthusiasm for the role's responsibilities and technical challenges
-- Use web-researched company information (mission, vision, values, culture) only if available
+- Only reference company mission/vision/values/culture if actually available - never mention their absence
 - Connect personal career goals with specific role responsibilities
 - Professional closing with clear next steps (avoid "your company" if company unknown)
 - Keep it concise and forward-looking
 - For unknown companies, use phrases like "this role" or "this opportunity" instead of company references
+- NEVER say you couldn't find information - just focus on what you know about the role
 
 ## Input Template:
 

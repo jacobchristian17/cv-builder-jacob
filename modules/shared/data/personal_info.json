@@ -22,7 +22,7 @@
         }
     },
     "work_info": {
-        "summary": "Software Engineer with '5+ years' of experience building fast-moving, AI-driven web applications for global enterprises and cross-border teams. Specialized in shipping scalable React + Next.js platforms with integrated ML/AI features, modern UI/UX, and rapid deployment pipelines (AWS, Azure). Proven ability to deliver features from concept to launch, collaborate async across time zones, and iterate quickly in fast-paced product environments.",
+        "summary": "Software Engineer with '5+ years' of experience building fast-moving, AI-driven web applications for global enterprises and cross-border teams. Specialized in shipping scalable React + Next.js platforms with integrated ML/AI features, modern UI/UX, and rapid deployment pipelines (AWS, Azure). Proven ability to deliver features from concept to launch, collaborate async across time zones, and iterate quickly in product environments.",
         "experience": [
             {
                 "role": "AI/UX Developer",
@@ -103,7 +103,7 @@
                         "User Interfaces",
                         "User Experience",
                         "API Integration",
-                        "TTD",
+                        "TDD",
                         "Test-Driven Development",
                         "Responsive Design",
                         "Data visualization",
@@ -117,31 +117,30 @@
                     "skill_list": [
                         "Python Django",
                         "Node",
-                        "Express",
+                        "Express.js",
                         "REST API",
                         "Websocket",
                         "Database",
                         "MongoDB",
-                        "SQL",
+                        "SQL Server",
                         "MySQL",
-                        "PostgreSQL",
-                        "C++",
-                        "C"
-                        
+                        "PostgreSQL"
                     ]
                 },
                 {
                     "category": "Cloud & DevOps",
                     "skill_list": [
-                        "AWS EC2 S3 bucket",
+                        "AWS EC2 S3 Lambda",
                         "Microsoft Azure",
+                        "Firebase",
                         "Docker",
                         "NGINX",
                         "Linux",
                         "CI/CD",
                         "HTTPS",
                         "OAuth 2.0",
-                        "SEO"
+                        "Jenkins",
+                        "Serverless"
                     ]
                 },
                 {
@@ -159,7 +158,7 @@
                         "Git version control",
                         "GitHub",
                         "GitLab",
-                        "GitBucket",
+                        "BitBucket",
                         "Figma",
                         "Storybook",
                         "Playwright",
@@ -186,7 +185,8 @@
                     "skill_list": [
                         "Cross-functional team collaboration",
                         "Code review leadership",
-                        "Technical ownership"
+                        "Technical ownership",
+                        "Leading colleagues"
                     ]
                 },
                 {
@@ -233,7 +233,8 @@
                         "Leadership experience",
                         "Ability to work independently",
                         "Communication skills",
-                        "Interpersonal skills"
+                        "Adaptability",
+                        "Creativity"
                     ]
                 },
                 {

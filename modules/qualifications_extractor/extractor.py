@@ -24,7 +24,7 @@ class QualificationsExtractor:
         self,
         num_qualifications: int = 4,
         use_llm: bool = True,
-        temperature: float = 0.3,
+        temperature: float = 0.1,  # Lower temperature for more consistent output
         max_tokens: int = 2000,
         auto_save: bool = True,
         output_dir: str = "modules/shared/qualifications"
@@ -167,7 +167,8 @@ Analyze the provided job description and extract the top 4 matching qualificatio
 ## Rules
 - Find exactly 4 qualifications from the applicant's JSON profile
 - Each qualification should be one concise sentence
-- Avoid repeating project details; summarize relevant projects instead of copying content
+- **IMPORTANT**: Only use "work_info.experience" section when referencing projects or work-related achievements
+- Avoid repeating project details; summarize relevant projects from "work_info.experience" instead of copying content
 - Only use information that exists in the provided JSON data
 - Do not fabricate or add non-existent information
 - Qualification description should be more than 10 words and not more than 20 words
@@ -175,7 +176,7 @@ Analyze the provided job description and extract the top 4 matching qualificatio
 ## Output Format
 Structure each qualification as:
 ```
-'{qualification_item}'
+"{qualification_item}"
 ```
 
 ### Example Output:
@@ -251,59 +252,67 @@ APPLICANT PROFILE (personal_info.json):
 
 Based on the instructions in the system prompt, extract exactly 4 qualifications that best match this job description.
 
-Return the output in the exact format specified (4 qualification items, each in double quotes on separate lines without commas).
+IMPORTANT: When referencing any projects or work achievements, ONLY use information from the "work_info.experience" section in the JSON data. Do not reference projects from other sections.
 
+Return the output in the exact format specified (4 qualification items, each in double quotes on separate lines).
+
+Example output format:
+"Computer Engineering graduate from Mapua University Manila"
+"Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation"
+"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
+"Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
 """
             
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
             # Parse the response which should be in the format:
-            # 'Qualification Item'
+            # "Qualification Item"
             qualifications = []
-            
+
             # Log the raw response for debugging
             logger.debug(f"Raw LLM response: {response[:500]}...")
-            
+
             # Try multiple parsing strategies
-            # Strategy 1: Look for pattern: 'Qualification Item' (text within single quotes)
-            pattern = r"'([^']+)'"
+            # Strategy 1: Look for pattern: "Qualification Item" (text within double quotes)
+            pattern = r'"([^"]+)"'
             matches = re.findall(pattern, response)
             
             # Filter out empty or invalid matches
             valid_matches = []
             for match in matches:
                 cleaned = match.strip()
-                # Skip empty strings, single characters, or strings that are too short
-                if cleaned and len(cleaned) > 5 and not cleaned.startswith('s profile'):
+                # Skip empty strings, single characters, or strings that are too short (must be > 10 words per prompt)
+                if cleaned and len(cleaned) > 10 and len(cleaned.split()) >= 5:
                     valid_matches.append(cleaned)
             
-            # Strategy 2: If we don't have enough matches, try looking for numbered lists
+            # Strategy 2: If we don't have enough matches, try looking for lines between markdown code blocks
             if len(valid_matches) < num_quals:
-                numbered_pattern = r'^\d+\.\s*(.+)$'
-                numbered_matches = re.findall(numbered_pattern, response, re.MULTILINE)
-                for match in numbered_matches:
-                    cleaned = match.strip().strip("'\"")
-                    if cleaned and len(cleaned) > 5 and cleaned not in valid_matches:
-                        valid_matches.append(cleaned)
-            
-            # Strategy 3: If still not enough, look for bullet points
-            if len(valid_matches) < num_quals:
-                bullet_pattern = r'^[\-\*•]\s*(.+)$'
-                bullet_matches = re.findall(bullet_pattern, response, re.MULTILINE)
-                for match in bullet_matches:
-                    cleaned = match.strip().strip("'\"")
-                    if cleaned and len(cleaned) > 5 and cleaned not in valid_matches:
-                        valid_matches.append(cleaned)
-            
-            # Strategy 4: If still not enough, look for lines that start with capital letters
+                # Look for content between ``` markers
+                code_block_pattern = r'```([\s\S]*?)```'
+                code_blocks = re.findall(code_block_pattern, response)
+                for block in code_blocks:
+                    # Parse each line in the code block
+                    lines = block.strip().split('\n')
+                    for line in lines:
+                        # Try to extract quoted content from each line
+                        line_quotes = re.findall(r'"([^"]+)"', line)
+                        for quote in line_quotes:
+                            cleaned = quote.strip()
+                            if cleaned and len(cleaned) > 10 and len(cleaned.split()) >= 5 and cleaned not in valid_matches:
+                                valid_matches.append(cleaned)
+
+            # Strategy 3: If still not enough, look for standalone quoted lines
             if len(valid_matches) < num_quals:
                 lines = response.split('\n')
                 for line in lines:
-                    cleaned = line.strip().strip("'\"")
-                    if (cleaned and len(cleaned) > 10 and 
-                        cleaned[0].isupper() and 
-                        cleaned not in valid_matches and
-                        not any(cleaned.startswith(x) for x in ['Based on', 'Here', 'The', 'Return', '#', '##'])):
-                        valid_matches.append(cleaned)
+                    line = line.strip()
+                    # Skip lines that are clearly not qualifications
+                    if line.startswith('#') or line.startswith('Based on') or line.startswith('Here') or line.startswith('```'):
+                        continue
+                    # Check if the entire line is a quoted string
+                    if line.startswith('"') and line.endswith('"'):
+                        cleaned = line.strip('"').strip()
+                        if cleaned and len(cleaned) > 10 and len(cleaned.split()) >= 5 and cleaned not in valid_matches:
+                            valid_matches.append(cleaned)
             
             # Create qualifications from valid matches
             if valid_matches:
@@ -489,10 +498,12 @@ Return the output in the exact format specified (4 qualification items, each in 
             system_prompt = """You are an expert recruiter matching candidate qualifications to job requirements.
 Analyze how well each qualification meets specific job requirements.
 
-CRITICAL: Each qualification MUST be from a DIFFERENT project, role, or skill area.
-DO NOT repeat similar achievements or projects across qualifications.
-Avoid generic phrases like "proficient in", "skilled in", "experienced with".
-Create specific, contextual qualifications that demonstrate practical application."""
+CRITICAL RULES:
+1. Each qualification MUST be from a DIFFERENT project, role, or skill area.
+2. DO NOT repeat similar achievements or projects across qualifications.
+3. When referencing projects or work achievements, ONLY use information from "work_info.experience" section.
+4. Avoid generic phrases like "proficient in", "skilled in", "experienced with".
+5. Create specific, contextual qualifications that demonstrate practical application from actual work experience."""
             
             # Append JSON format requirement
             system_prompt += """
@@ -526,11 +537,12 @@ RESUME:
 Instructions for DIVERSE QUALIFICATIONS:
 1. Extract {num_quals} qualifications from DIFFERENT projects/roles/companies
 2. MANDATORY: No two qualifications should reference the same project or achievement
-3. Match each to a specific job requirement
-4. Diversify: Mix technical skills, leadership, process improvements, different time periods
-5. NEVER use generic phrases like "proficient in" or "high proficiency"
-6. Include specific projects, metrics, or practical applications
-7. If you mention a project once (e.g., "GenAI Chatbot"), don't reference it again
+3. IMPORTANT: When referencing projects, ONLY use those from "work_info.experience" section
+4. Match each to a specific job requirement
+5. Diversify: Mix technical skills, leadership, process improvements, different time periods
+6. NEVER use generic phrases like "proficient in" or "high proficiency"
+7. Include specific projects, metrics, or practical applications from work experience
+8. If you mention a project once (e.g., "GenAI Chatbot"), don't reference it again
 
 DIVERSITY CHECKLIST:
 - Are qualifications from different roles or companies? ✓
