@@ -157,4 +157,3 @@ qualifications.json
 !data/sample_*
 !tests/fixtures/*
 temp
-personal_info.json

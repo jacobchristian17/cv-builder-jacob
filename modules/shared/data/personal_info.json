@@ -1,0 +1,292 @@
+{
+    "personal_info": {
+        "name": "Jacob Christian P. Guanzing",
+        "job_title": "Full Stack & AI Integration Engineer",
+        "address_line": {
+            "street": "69 Coronado St.,",
+            "barangay": "Hulo",
+            "city": "Mandaluyong",
+            "country": "Philippines",
+            "zip": "1550"
+        },
+        "mobile": "+639673802998",
+        "email": "jcpguanzing@gmail.com",
+        "website": {
+            "url": "https://jacobs-space.vercel.app",
+            "text": "jacobs-space.vercel.app"
+        },
+        "linkedin": {
+            "url": "https://www.linkedin.com/in/jcpguanzing/",
+            "text": "linkedin.com/in/jcpguanzing",
+            "icon_url": "https://logospng.org/download/linkedin/logo-linkedin-icon-4096.png"
+        }
+    },
+    "work_info": {
+        "summary": "Software Engineer with '5+ years' of experience building fast-moving, AI-driven web applications for global enterprises and cross-border teams. Specialized in shipping scalable React + Next.js platforms with integrated ML/AI features, modern UI/UX, and rapid deployment pipelines (AWS, Azure). Proven ability to deliver features from concept to launch, collaborate async across time zones, and iterate quickly in product environments.",
+        "experience": [
+            {
+                "role": "AI/UX Developer",
+                "company": "Seven Seven Global Services Inc.",
+                "location": "(US F500C) — Pasig, NCR",
+                "period": "Aug 2024 - Aug 2025",
+                "features": [
+                    "Shipped '1 GenAI/ RAG Chatbot & 20+ UI features' to a proprietary platform app used by individuals and teams worldwide",
+                    "Collaborated with 5+ ML Engineers & Data Scientists to deploy LLM solutions",
+                    "Collaborated with 3+ UX designers for frontend design & implementation",
+                    "Implemented '20+ automated UI testing suites' with Playwright, 'reducing QA cycles by 70%'",
+                    "Participated in code reviews maintaining '>90% code quality standards'"
+                ]
+            },
+            {
+                "role": "UI/UX Developer",
+                "company": "GHD Pty, Ltd.",
+                "location": "(AU/CA) — Makati, NCR",
+                "period": "May 2023 - Aug 2024",
+                "features": [
+                    "Built '30+ CMS frontend components' improving usability of content authors for company website management",
+                    "'Led Angular Ionic upgrade from v12 to v18' for cross-platform Health & Safety mobile app for iOS and Android users",
+                    "Developed '4+ reusable components' with React memoization, 'improving loading performance by 30%'",
+                    "Implemented '10+ automated testing' with Selenium, 'reducing manual testing cycles by 50%'"
+                ]
+            },
+            {
+                "role": "MERN Stack Developer",
+                "company": "Vertere Global Solutions Inc.",
+                "location": "San Juan, NCR",
+                "period": "June 2022 - April 2023",
+                "features": [
+                    "Developed 'Check Request System' for five different HQs, processing 500+ transactions each per month for liquidation, cheque processing, and cash advances",
+                    "'Profit & Loss Dashboard' for Finance dept., used for expense management",
+                    "Deployed '4 production applications' using Docker containerization and Azure cloud infrastructure",
+                    "Implemented HTTPS security protocols and maintained Linux-based server instances with '99.9% uptime'"
+                ]
+            },
+            {
+                "role": "Full Stack Developer",
+                "company": "Freelance Clients",
+                "location": "(GL) — Mandaluyong, NCR",
+                "period": "March 2020 - April 2022",
+                "features": [
+                    "Delivered '4+ e-commerce websites' with modern parallax design with SEO",
+                    "Published with '72.5% On-page' score for Accelerate International Logistics",
+                    "Provided live coding tutorials to US-based clients",
+                    "Built tutorial platform user management system for academic institution"
+                ]
+            }
+        ],
+        "skills": {
+            "hard_skills": [
+                {
+                    "category": "Frontend Tools",
+                    "skill_list": [
+                        "React Native",
+                        "Redux",
+                        "Angular",
+                        "Ionic",
+                        "HTML5",
+                        "Tailwind CSS 3",
+                        ".NET",
+                        "JavaScript ES6",
+                        "TypeScript",
+                        "NextJS",
+                        "GraphQL",
+                        "jQuery",
+                        "Bootstrap",
+                        "SASS",
+                        "SCSS"
+                    ]
+                },
+                {
+                    "category": "Frontend Concepts",
+                    "skill_list": [
+                        "User Interfaces",
+                        "User Experience",
+                        "API Integration",
+                        "TDD",
+                        "Test-Driven Development",
+                        "Responsive Design",
+                        "Data visualization",
+                        "Product development",
+                        "Microservices",
+                        "Unit testing",
+                        "Integration testing"
+                    ]
+                },
+                {
+                    "category": "Backend",
+                    "skill_list": [
+                        "Python Django",
+                        "Node",
+                        "Express.js",
+                        "REST API",
+                        "Websocket",
+                        "Database",
+                        "MongoDB",
+                        "SQL Server",
+                        "MySQL",
+                        "PostgreSQL"
+                    ]
+                },
+                {
+                    "category": "Cloud & DevOps",
+                    "skill_list": [
+                        "AWS EC2 S3 Lambda",
+                        "Microsoft Azure",
+                        "Firebase",
+                        "Docker",
+                        "Kubernetes",
+                        "NGINX",
+                        "Linux",
+                        "CI/CD",
+                        "HTTPS",
+                        "OAuth 2.0",
+                        "Jenkins",
+                        "Serverless"
+                    ]
+                },
+                {
+                    "category": "Agile",
+                    "skill_list": [
+                        "Confluence",
+                        "Jira",
+                        "Scrum",
+                        "Kanban"
+                    ]
+                },
+                {
+                    "category": "Tools",
+                    "skill_list": [
+                        "Git version control",
+                        "GitHub",
+                        "GitLab",
+                        "BitBucket",
+                        "Figma",
+                        "Storybook",
+                        "Playwright",
+                        "Cypress",
+                        "Jest"
+                    ]
+                },
+                {
+                    "category": "Software Engineering",
+                    "skill_list": [
+                        "Data Structure Algorithms",
+                        "Design software",
+                        "Design Systems",
+                        "Design Patterns",
+                        "Troubleshooting",
+                        "Best practices",
+                        "Feasibility study"
+                    ]
+                }
+            ],
+            "soft_skills": [
+                {
+                    "category": "Leadership",
+                    "skill_list": [
+                        "Cross-functional team collaboration",
+                        "Code review leadership",
+                        "Technical ownership",
+                        "Leading colleagues"
+                    ]
+                },
+                {
+                    "category": "Communication",
+                    "skill_list": [
+                        "Business requirements gathering",
+                        "Technical documentation",
+                        "Stakeholder engagement",
+                        "Technical specifications",
+                        "Team mentorship",
+                        "Collaboration skills"
+                    ]
+                },
+                {
+                    "category": "Problem Solving",
+                    "skill_list": [
+                        "Algorithm design",
+                        "Strong analytics",
+                        "Logic visualization",
+                        "Debugging",
+                        "Research",
+                        "Automation"
+                    ]
+                },
+                {
+                    "category": "Project Management",
+                    "skill_list": [
+                        "Agile methodologies",
+                        "Sprint planning",
+                        "Time management",
+                        "SDLC",
+                        "Design and development"
+                    ]
+                },
+                {
+                    "category": "Work Ethics",
+                    "skill_list": [
+                        "Analytical thinking",
+                        "Flexibility",
+                        "Innovation",
+                        "Self-driven",
+                        "Leadership experience",
+                        "Ability to work independently",
+                        "Communication skills",
+                        "Adaptability",
+                        "Creative"
+                    ]
+                },
+                {
+                    "category":"Languages",
+                    "skill_list": [
+                        "English (Professional)",
+                        "Filipino (Native)"
+                    ]
+                }
+            ]
+        }
+    },
+    "education": {
+        "degree": "Bachelor of Science in Computer Engineering",
+        "school_location": "Mapua University, Manila, PH",
+        "period": "2015-2022"
+    },
+    "certifications": [
+        {
+            "certification_name": "Certified Lean Six Sigma White Belt",
+            "certification_provider": "Six Sigma PH",
+            "certification_date": "2025",
+            "certification_link": "https://sixsigma.freshlearn.com/certificate/1556969"
+        },
+        {
+            "certification_name": "Basics of UI Design",
+            "certification_provider": "Cambridge International Qualifications, UK",
+            "certification_date": "2025",
+            "certification_link": "https://uniathena.com/verify/certificate?certID=1370-7221-9127"
+        },
+        {
+            "certification_name": "Google Cloud Big Data and Machine Learning Fundamentals",
+            "certification_provider": "Google Cloud Platform - GCP",
+            "certification_date": "2020",
+            "certification_link": "https://coursera.org/verify/UUQXGLPDM3VJ2019-2022"
+        },
+        {
+            "certification_name": "Introduction to TensorFlow for AI, ML, and Deep Learning",
+            "certification_provider": "DeepLearning.AI",
+            "certification_date": "2020",
+            "certification_link": "https://coursera.org/verify/FFHG8BC72NKZ"
+        }
+    ],
+    "other": {
+        "interest_and_hobbies": [
+            {
+                "title": "Emerging Technologies",
+                "content": "Passionate about adopting cutting-edge tools to enhance development efficiency. In 2020, I mastered React for frontend development during my academic years. By 2022, I transitioned to mobile-first development, followed by cross-platform PWAs and native mobile apps in 2023. Today, I leverage LLMs, AI-augmented workflows, and prompt engineering to accelerate web development."
+            },
+            {
+                "title": "Continuous Learning",
+                "content": "I stay motivated by actively explore advancements in AI/ML technologies, cloud platforms, and modern frontend frameworks, following the latest trends in software development with articles and blogs. Received technical training during my tenure on enterprise corporations"
+            }
+        ]
+    }
+}
