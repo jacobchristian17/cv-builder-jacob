@@ -22,7 +22,7 @@ class CoverLetterJSONGenerator:
         temperature: float = 0.7,
         max_tokens: int = 2500,
         use_web_search: bool = True,
-        max_word_count: int = 250
+        max_word_count: int = 280
     ):
         """
         Initialize the JSON content generator.
@@ -32,7 +32,7 @@ class CoverLetterJSONGenerator:
             temperature: LLM temperature for generation
             max_tokens: Maximum tokens for LLM response
             use_web_search: Whether to use web search for company information
-            max_word_count: Maximum word count for the cover letter body (default: 250)
+            max_word_count: Maximum word count for the cover letter body (default: 280)
         """
         self.use_llm = use_llm
         self.use_web_search = use_web_search
@@ -465,7 +465,7 @@ class CoverLetterJSONGenerator:
 
         return None
 
-    def _validate_and_trim_paragraphs(self, paragraphs: List[str], max_words: int = 250) -> List[str]:
+    def _validate_and_trim_paragraphs(self, paragraphs: List[str], max_words: int = 280) -> List[str]:
         """
         Validate and trim paragraphs to stay within word limit.
 
@@ -630,13 +630,29 @@ class CoverLetterJSONGenerator:
         
         # Add ATS Score information if available
         score_info = ""
+        low_score_instructions = ""
         if score_result:
+            overall_score = score_result.get('overall_score', 0)
             score_info = f"""
 **ATS SCORE ANALYSIS:**
-- Overall Score: {score_result.get('overall_score', 'N/A')}%
+- Overall Score: {overall_score}%
 - Missing Keywords: {', '.join(score_result.get('missing_items', {}).get('missing_keywords', [])[:5]) if score_result.get('missing_items', {}).get('missing_keywords') else 'None'}
 - Missing Hard Skills: {', '.join(score_result.get('missing_items', {}).get('missing_hard_skills', [])[:5]) if score_result.get('missing_items', {}).get('missing_hard_skills') else 'None'}
 - Key Strengths: Focus on highlighting existing matched skills and experience
+"""
+
+            # Add special instructions if ATS score is below 85%
+            if overall_score < 85:
+                low_score_instructions = f"""
+**IMPORTANT - LOW ATS SCORE ({overall_score}%) INSTRUCTIONS:**
+Since the ATS score is below 85%, you MUST include a compelling paragraph that explains why the candidate would still be an excellent fit for this role despite not having all the exact keywords/skills mentioned in the job description. Focus on:
+1. Transferable skills and relevant experience that demonstrates capability
+2. Learning agility and ability to quickly master new technologies/skills
+3. Unique value proposition and complementary strengths
+4. Passion for the role and company mission
+5. Evidence of successful adaptation to similar challenges in previous roles
+
+This "why I'm still a good fit" reasoning should be woven naturally into one of the cover letter paragraphs, preferably the second paragraph.
 """
 
         # Format input according to prompt.md template
@@ -650,6 +666,7 @@ class CoverLetterJSONGenerator:
 - Leadership Experience: {self._extract_leadership(experience)}
 - Specialized Experience: {self._extract_specialized_skills(skills)}
 {score_info}
+{low_score_instructions}
 
 **JOB DETAILS:**
 - Position Title: [Extract from job description]

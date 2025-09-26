@@ -39,7 +39,7 @@ def sanitize_filename(text):
     return sanitized.strip()
 
 
-async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_default=False, word_limit=250, cl_add_top=None):
+async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_default=False, word_limit=280, cl_add_top=None):
     """Run the complete workflow"""
     
     print("🚀 STARTING ATS CV WORKFLOW")
@@ -360,8 +360,8 @@ Examples:
     parser.add_argument(
         '-w', '--word-limit',
         type=int,
-        default=250,
-        help='Maximum word count for cover letter body (default: 250)'
+        default=280,
+        help='Maximum word count for cover letter body (default: 280)'
     )
 
     parser.add_argument(

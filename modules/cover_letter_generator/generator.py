@@ -21,7 +21,7 @@ class CoverLetterGenerator:
         temperature: float = 0.7,
         max_tokens: int = 2500,
         use_web_search: bool = True,
-        max_word_count: int = 250
+        max_word_count: int = 280
     ):
         """
         Initialize the cover letter generator.
@@ -33,7 +33,7 @@ class CoverLetterGenerator:
             temperature: LLM temperature for generation
             max_tokens: Maximum tokens for LLM response
             use_web_search: Whether to use web search for company information
-            max_word_count: Maximum word count for cover letter body (default: 250)
+            max_word_count: Maximum word count for cover letter body (default: 280)
         """
         self.output_dir = Path(output_dir or "output/cover_letters")
         self.output_dir.mkdir(parents=True, exist_ok=True)
