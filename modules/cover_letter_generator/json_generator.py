@@ -10,7 +10,7 @@ from datetime import datetime
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from modules.llm.groq_client import GroqClient
+from modules.llm.factory import get_llm_client
 
 
 class CoverLetterJSONGenerator:
@@ -41,8 +41,7 @@ class CoverLetterJSONGenerator:
         
         if self.use_llm:
             try:
-                self.llm_client = GroqClient(
-                    model="meta-llama/llama-4-scout-17b-16e-instruct",  # Use larger model for better writing
+                self.llm_client = get_llm_client(
                     temperature=temperature,
                     max_tokens=max_tokens
                 )

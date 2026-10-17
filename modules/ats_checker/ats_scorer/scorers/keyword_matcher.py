@@ -10,7 +10,7 @@ from pathlib import Path
 # Add path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
-from modules.llm.groq_client import GroqClient
+from modules.llm.factory import get_llm_client
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +24,7 @@ class KeywordMatcher:
         
         if self.use_llm:
             try:
-                self.llm_client = GroqClient(
-                    model="meta-llama/llama-4-scout-17b-16e-instruct",
+                self.llm_client = get_llm_client(
                     temperature=0.2,  # Lower temperature for more consistent results
                     max_tokens=2000
                 )

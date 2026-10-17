@@ -11,7 +11,7 @@ from datetime import datetime
 # Add path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from modules.llm.groq_client import GroqClient
+from modules.llm.factory import get_llm_client
 from modules.qualifications_extractor.models import Qualification, QualificationMatch, QualificationType
 
 logger = logging.getLogger(__name__)
@@ -47,8 +47,7 @@ class QualificationsExtractor:
         
         if self.use_llm:
             try:
-                self.llm_client = GroqClient(
-                    model="meta-llama/llama-4-scout-17b-16e-instruct",
+                self.llm_client = get_llm_client(
                     temperature=temperature,
                     max_tokens=max_tokens
                 )
@@ -101,8 +100,8 @@ class QualificationsExtractor:
         default_quals_text = [
             "Computer Engineering graduate from Mapua University Manila",
             "Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
-            "Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
-            "Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
+            "Strong AI fluency in terms of architecture, design, delegation, and governance for safe and ethical use",
+            "Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
         ]
 
         qualifications = []
@@ -120,7 +119,7 @@ class QualificationsExtractor:
             qualifications.append(qualification)
 
         # Extract job info if job description path provided
-        job_title = "Full-stack Engineer"
+        job_title = "AI/ Fullstack Engineer"
         company_name = ""
         
         if job_description_path and job_description_path != "default":
@@ -185,9 +184,9 @@ Structure each qualification as:
 
 "Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation"
 
-"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
+"Strong AI fluency in terms of architecture, design, delegation, and governance for safe and ethical use"
 
-"Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
+"Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
 ```"""
     
     def extract_qualifications(
@@ -259,8 +258,8 @@ Return the output in the exact format specified (4 qualification items, each in 
 Example output format:
 "Computer Engineering graduate from Mapua University Manila"
 "Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation"
+"Strong AI fluency in terms of architecture, design, delegation, and governance for safe and ethical use"
 "Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
-"Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
 """
             
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
@@ -788,8 +787,8 @@ Requirements:
         default_quals_text = [
             "Computer Engineering graduate from Mapua University Manila",
             "Expertise on React, Next.js, Node.js Fullstack along with ML/AI Integration, CI/CD, and workflow automation",
-            "Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics",
-            "Solid grasp on technical triage, debt, & ownership; proven ability to lead on tasks and guide colleagues"
+            "Strong AI fluency in terms of architecture, design, delegation, and governance for safe and ethical use",
+            "Facilitated cross-functional agile collaboration, aligning stakeholder expectations through iterative demos and data-driven metrics"
         ]
 
         qualifications = []

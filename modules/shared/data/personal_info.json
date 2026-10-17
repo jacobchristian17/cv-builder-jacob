@@ -12,8 +12,8 @@
         "mobile": "+639673802998",
         "email": "jcpguanzing@gmail.com",
         "website": {
-            "url": "https://jacobs-space.vercel.app",
-            "text": "jacobs-space.vercel.app"
+            "url": "https://jacobch.dev",
+            "text": "jacobch.dev"
         },
         "linkedin": {
             "url": "https://www.linkedin.com/in/jcpguanzing/",
@@ -22,8 +22,35 @@
         }
     },
     "work_info": {
-        "summary": "Software Engineer with '5+ years' of experience building fast-moving, AI-driven web applications for global enterprises and cross-border teams. Specialized in shipping scalable React + Next.js platforms with integrated ML/AI features, modern UI/UX, and rapid deployment pipelines (AWS, Azure). Proven ability to deliver features from concept to launch, collaborate async across time zones, and iterate quickly in product environments.",
+        "summary": "Full Stack Developer with '6+ years' shipping production platforms, specializing in 'Node.js'-driven backends for AI-integrated products. Owned projects end-to-end from database design to deployment,  while collaborating async across global time zones.",
         "experience": [
+            {
+                "role": "Tech Lead",
+                "company": "Myridius (Provider for U.S. Banks)",
+                "location": "(US F500C) — Makati, NCR",
+                "period": "Aug 2025 - Present",
+                "features": [
+                    "Lead team code reviews, with covering '+90%' of codes while keeping mid-lower level coding practices",
+                    "Lead '2 internal hackathons' pertaining to 'Generative' and 'Agentic' 'AI' apps and harnesses, utilizing the latest agentic lifecycles by 'Anthropic'",
+                    "Responded and fixed mission-critical, pre-production release issues preventing prod bugs before shipping",
+                    "Improved 'UI/UX' performance with faster 'LCP', in full compliance with A11Y Standards, as measured in 'Datadog' on the pages with '40%' of total user traffic",
+                    "'400+' contributions for the UI/UX and API server for 'Travelbank' and 'NextView' apps running on Node 24.19 and 22.22"
+                ]
+            },
+            {
+                "role": "Founding Developer",
+                "company": "FindTalent PH",
+                "location": "Global",
+                "period": "Aug 2025 - Present",
+                "features": [
+                    "Built the platform end-to-end with 'React/Next.js', architecting 'Node.js-based API routes and server actions' for the backend and database layer",
+                    "Designed backend services powering 'AI-driven talent profiling', with optimized token usage and LLM output calibration",
+                    "Currently maintaining '+2,000' monthly active users, and supporting MRR to maintain operation costs ",
+                    "Integrated third-party 'APIs' for payment processing, email notifications, and analytics tracking",
+                    "Built and developed the 'UI/UX' of the platform for all types of users, improving 'LCP' and 'async handling'",
+                    "Utilized latest AI tools with 'agents', 'skills', and 'MCP Servers' and managed for efficient and safe use "
+                ]
+            },
             {
                 "role": "AI/UX Developer",
                 "company": "Seven Seven Global Services Inc.",
@@ -252,6 +279,18 @@
         "period": "2015-2022"
     },
     "certifications": [
+        {
+            "certification_name": "Claude Certified Architect - Foundations",
+            "certification_provider": "Anthropic",
+            "certification_date": "Oct 9, 2026",
+            "certification_link": "https://www.credly.com/badges/33063e55-d046-4485-9c05-c98535629b7c"
+        },
+        {
+            "certification_name": "Claude Certified Associate - Foundations",
+            "certification_provider": "Anthropic",
+            "certification_date": "Sep 30, 2026",
+            "certification_link": "https://www.credly.com/badges/0a390981-10ab-454c-8485-f392d398fe7e"
+        },
         {
             "certification_name": "Certified Lean Six Sigma White Belt",
             "certification_provider": "Six Sigma PH",
