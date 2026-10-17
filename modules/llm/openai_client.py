@@ -46,7 +46,8 @@ class OpenAIClient:
             messages=messages,
             temperature=temperature or self.temperature,
             max_tokens=max_tokens or self.max_tokens,
-            stream=stream
+            stream=stream,
+            store=False
         )
 
         if stream:
@@ -66,7 +67,8 @@ class OpenAIClient:
             messages=messages,
             temperature=temperature or self.temperature,
             max_tokens=max_tokens or self.max_tokens,
-            stream=stream
+            stream=stream,
+            store=False
         )
 
         if stream:
