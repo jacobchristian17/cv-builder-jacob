@@ -39,7 +39,7 @@ def sanitize_filename(text):
     return sanitized.strip()
 
 
-async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_default=False, word_limit=280, cl_add_top=None):
+async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_default=False, word_limit=None, cl_add_top=None, cl_instructions=None):
     """Run the complete workflow"""
     
     print("🚀 STARTING ATS CV WORKFLOW")
@@ -258,9 +258,15 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
     # Step 3: Generate Cover Letter (skip if --no-cover-letter is used)
     cover_letter_path = None
     if not no_cover_letter:
-        print(f"Creating cover letter (max {word_limit} words)...")
+        # Custom instructions may set their own length, so only cap it when explicitly asked
+        enforce_word_limit = word_limit is not None or not cl_instructions
+        word_limit = word_limit or 280
+        if enforce_word_limit:
+            print(f"Creating cover letter (max {word_limit} words)...")
+        else:
+            print("Creating cover letter (custom instructions, no word cap)...")
         # print("-" * 40)
-        
+
         try:
             # Initialize cover letter generator
             cover_generator = CoverLetterGenerator(
@@ -290,7 +296,9 @@ async def run_workflow(job_file, no_top=False, no_cover_letter=False, use_defaul
                 company_info=company_info,
                 custom_filename=cover_letter_filename,
                 score_result=score_dict,
-                cl_add_top=cl_add_top
+                cl_add_top=cl_add_top,
+                cl_instructions=cl_instructions,
+                enforce_word_limit=enforce_word_limit
             )
             
             # print(f"✅ Done")
@@ -360,8 +368,8 @@ Examples:
     parser.add_argument(
         '-w', '--word-limit',
         type=int,
-        default=280,
-        help='Maximum word count for cover letter body (default: 280)'
+        default=None,
+        help='Maximum word count for cover letter body (default: 280). With --cl-instructions, the limit is only enforced when this flag is given explicitly.'
     )
 
     parser.add_argument(
@@ -371,13 +379,30 @@ Examples:
         help='Add content to the top of the cover letter. If cover letter starts with "I am excited to apply for" and value is "WRITE_IF_HUMAN", prepends the string on a new line before the existing content.'
     )
 
+    parser.add_argument(
+        '--cl-instructions', '-CI',
+        type=str,
+        default=None,
+        help='Extra instructions for writing the cover letter, as text or a path to a .txt/.md file. They override the default structure, tone, paragraph count and word limit.'
+    )
+
     args = parser.parse_args()
-    
+
     # Check if job file exists
     if not Path(args.job_file).exists():
         print(f"❌ Error: Job file '{args.job_file}' not found")
         sys.exit(1)
-    
+
+    # Allow instructions to be passed as a file path
+    cl_instructions = args.cl_instructions
+    if cl_instructions:
+        try:
+            instructions_path = Path(cl_instructions)
+            if instructions_path.is_file():
+                cl_instructions = instructions_path.read_text(encoding='utf-8')
+        except OSError:
+            pass  # Not a usable path (e.g. long text) - treat as literal instructions
+
     try:
         success = await run_workflow(
             args.job_file,
@@ -385,7 +410,8 @@ Examples:
             no_cover_letter=args.no_cover_letter,
             use_default=args.default,
             word_limit=args.word_limit,
-            cl_add_top=args.cl_add_top
+            cl_add_top=args.cl_add_top,
+            cl_instructions=cl_instructions
         )
         
         if success:

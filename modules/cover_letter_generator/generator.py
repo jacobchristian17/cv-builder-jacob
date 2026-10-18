@@ -64,7 +64,9 @@ class CoverLetterGenerator:
         company_info: Optional[Dict] = None,
         custom_filename: Optional[str] = None,
         score_result: Optional[Dict] = None,
-        cl_add_top: Optional[str] = None
+        cl_add_top: Optional[str] = None,
+        cl_instructions: Optional[str] = None,
+        enforce_word_limit: bool = True
     ) -> str:
         """
         Generate a cover letter PDF using two-step workflow.
@@ -80,6 +82,8 @@ class CoverLetterGenerator:
             custom_filename: Optional custom filename for PDF
             score_result: Optional ATS score results dictionary
             cl_add_top: Optional string to add to the top of the cover letter
+            cl_instructions: Optional user instructions that override the default structure/rules
+            enforce_word_limit: Whether to hard-trim the body to max_word_count after generation
 
         Returns:
             Path to generated PDF file
@@ -91,7 +95,9 @@ class CoverLetterGenerator:
             qualifications_path=qualifications_path,
             company_info=company_info,
             score_result=score_result,
-            cl_add_top=cl_add_top
+            cl_add_top=cl_add_top,
+            cl_instructions=cl_instructions,
+            enforce_word_limit=enforce_word_limit
         )
 
         # Save content to temporary JSON file

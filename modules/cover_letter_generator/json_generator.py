@@ -191,7 +191,7 @@ class CoverLetterJSONGenerator:
             r'(?:at|join|with)\s+([A-Z][a-zA-Z\s&.,]+)(?:\s+is|\s+seeks|\s+looking)',
             r'([A-Z][a-zA-Z\s&.,]+)\s+is\s+(?:seeking|looking|hiring)',
             r'Company:\s*([A-Z][a-zA-Z\s&.,]+)',
-            r'^([A-Z][a-zA-Z\s&.,]+)\s*-\s*',
+            r'^([A-Z][a-zA-Z&.,]*(?: [A-Z][a-zA-Z&.,]*){0,4})\s+-\s+',
         ]
         
         for pattern in patterns:
@@ -211,7 +211,9 @@ class CoverLetterJSONGenerator:
         qualifications_path: str = "modules/shared/qualifications/qualifications.json",
         company_info: Optional[Dict] = None,
         score_result: Optional[Dict] = None,
-        cl_add_top: Optional[str] = None
+        cl_add_top: Optional[str] = None,
+        cl_instructions: Optional[str] = None,
+        enforce_word_limit: bool = True
     ) -> Dict:
         """
         Generate cover letter content as structured data.
@@ -223,6 +225,8 @@ class CoverLetterJSONGenerator:
             company_info: Optional company details dict
             score_result: Optional ATS score results dictionary
             cl_add_top: Optional string to add to the top of the cover letter
+            cl_instructions: Optional user instructions that override the default structure/rules
+            enforce_word_limit: Whether to hard-trim the body to max_word_count after generation
 
         Returns:
             Dictionary with cover letter content
@@ -256,7 +260,9 @@ class CoverLetterJSONGenerator:
                 qualifications,
                 company_info,
                 score_result,
-                cl_add_top
+                cl_add_top,
+                cl_instructions,
+                enforce_word_limit
             )
         else:
             return self._generate_basic(
@@ -332,6 +338,24 @@ class CoverLetterJSONGenerator:
         
         return str(output_path)
     
+    @staticmethod
+    def _strip_dashes(text):
+        """Replace em/en dashes with commas or hyphens."""
+        if not isinstance(text, str):
+            return text
+        text = re.sub(r'(?<=\d)\s*[–—]\s*(?=\d)', '-', text)  # ranges: 2019-2022
+        text = re.sub(r'\s*[–—]\s*', ', ', text)
+        return text.replace(',,', ',')
+
+    @staticmethod
+    def _address_in_posting(value, job_description: str) -> bool:
+        """True only if every comma-separated part of an address appears in the posting."""
+        if not value or not job_description:
+            return False
+        haystack = re.sub(r'\s+', ' ', job_description).lower()
+        parts = [p.strip().lower() for p in re.split(r'[,\n]', value) if p.strip()]
+        return bool(parts) and all(p in haystack for p in parts)
+
     def _count_words(self, text: str) -> int:
         """Count words in a text string."""
         # Remove extra whitespace and split by whitespace
@@ -548,7 +572,9 @@ class CoverLetterJSONGenerator:
         qualifications: Optional[Dict],
         company_info: Optional[Dict],
         score_result: Optional[Dict] = None,
-        cl_add_top: Optional[str] = None
+        cl_add_top: Optional[str] = None,
+        cl_instructions: Optional[str] = None,
+        enforce_word_limit: bool = True
     ) -> Dict:
         """Generate cover letter content using LLM."""
 
@@ -608,6 +634,9 @@ class CoverLetterJSONGenerator:
         7. NEVER mention what information you couldn't find - do not say things like "Although I couldn't find specific information" or "I couldn't locate"
         8. NEVER apologize for missing information - simply write based on what you have
         9. When company research is unavailable, focus entirely on the role and your qualifications
+        10. NEVER use em dashes or en dashes. Use commas, periods, colons or hyphens
+        11. NEVER state or imply a lack of experience. Connect any gap to the closest real experience, or leave the requirement out if no honest connection exists
+        12. Company location, business and mission come ONLY from the job description. Never guess an address; use null if none is given
 
         JSON FORMAT REQUIREMENTS:
         - ONLY return valid JSON, no other text before or after
@@ -644,12 +673,13 @@ class CoverLetterJSONGenerator:
             if overall_score < 85:
                 low_score_instructions = f"""
 **IMPORTANT - LOW ATS SCORE ({overall_score}%) INSTRUCTIONS:**
-Since the ATS score is below 85%, you MUST include a compelling paragraph that explains why the candidate would still be an excellent fit for this role despite not having all the exact keywords/skills mentioned in the job description. Focus on:
-1. Transferable skills and relevant experience that demonstrates capability
-2. Learning agility and ability to quickly master new technologies/skills
+Since the ATS score is below 85%, include a confident passage that shows why the candidate is a strong fit. Do NOT mention missing skills, keywords or gaps, and never say the candidate lacks experience. Instead connect the job's requirements to the closest real experience:
+1. Transferable skills and related experience that demonstrate capability
+2. Evidence of quickly mastering and delivering with new technologies
 3. Unique value proposition and complementary strengths
-4. Passion for the role and company mission
+4. Interest in the role and company mission (from the job description only)
 5. Evidence of successful adaptation to similar challenges in previous roles
+If a requirement has no honest connection to the candidate's background, leave it out.
 
 This "why I'm still a good fit" reasoning should be woven naturally into one of the cover letter paragraphs, preferably the second paragraph.
 """
@@ -704,7 +734,20 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
 - Strictly return answer in JSON format only
 
 """
-        
+
+        # User instructions go last and take precedence over every default rule above
+        if cl_instructions:
+            print("   📝 Applying custom cover letter instructions")
+            prompt += f"""
+**USER INSTRUCTIONS (HIGHEST PRIORITY):**
+The candidate has given the instructions below. They OVERRIDE any conflicting rule, structure,
+tone, paragraph count, or word limit stated anywhere above (system prompt included).
+Follow them exactly. The only thing that cannot change is the output format: still return the
+same JSON object, with "paragraphs" as an array of strings (any number of paragraphs is allowed).
+
+{cl_instructions.strip()}
+"""
+
         try:
             response = self.llm_client.generate(prompt, system_prompt=system_prompt)
 
@@ -728,11 +771,15 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
                             final_company_info['name'] = llm_name
 
                     # Update address fields if available
+                    # Only accept an address that is actually written in the posting
                     for field in ['address_line1', 'address_line2', 'city_state_zip']:
                         if not final_company_info.get(field) and llm_company_info.get(field):
                             value = llm_company_info.get(field)
                             if value and value not in ['null', 'None', '[Extract from job description]', '']:
-                                final_company_info[field] = value
+                                if self._address_in_posting(value, job_description):
+                                    final_company_info[field] = value
+                                else:
+                                    print(f"   ⚠️  Dropped address '{value}': not found in the job posting")
 
                 # Clean up company_info - set to None if no valid name
                 if not final_company_info.get('name') or final_company_info.get('name') in ['null', 'None', '', '[Extract from job description]']:
@@ -745,15 +792,18 @@ Generate a 3-paragraph cover letter following the structure defined in the syste
 
                 # Apply word count validation and trimming
                 raw_paragraphs = letter_content.get('paragraphs', [])
-                validated_paragraphs = self._validate_and_trim_paragraphs(raw_paragraphs, max_words=self.max_word_count)
+                if enforce_word_limit:
+                    validated_paragraphs = self._validate_and_trim_paragraphs(raw_paragraphs, max_words=self.max_word_count)
+                else:
+                    validated_paragraphs = raw_paragraphs
 
                 # Prepare final data structure
                 content = {
                     'personal_info': person_data,
                     'company_info': final_company_info,
-                    'paragraphs': validated_paragraphs,
-                    'salutation': letter_content.get('salutation', 'Dear Hiring Manager,'),
-                    'closing': letter_content.get('closing', 'Thank you and best regards,')
+                    'paragraphs': [self._strip_dashes(p) for p in validated_paragraphs],
+                    'salutation': self._strip_dashes(letter_content.get('salutation', 'Dear Hiring Manager,')),
+                    'closing': self._strip_dashes(letter_content.get('closing', 'Thank you and best regards,'))
                 }
 
                 # Apply cl_add_top logic if specified

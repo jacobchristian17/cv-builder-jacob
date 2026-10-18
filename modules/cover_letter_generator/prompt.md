@@ -14,6 +14,9 @@ CRITICAL OUTPUT RULES:
 8. NEVER apologize for missing information - simply write based on what you have
 9. When company research is unavailable, focus entirely on the role and your qualifications
 10. Each paragraph should be approximately 80 words to stay within the 250-word limit
+11. NEVER use em dashes or en dashes anywhere in the letter. Use commas, periods, colons or hyphens instead
+12. NEVER state or imply a lack of experience: no "I haven't used X", "I have no experience with X", "although I am new to X", "despite not having". If the job asks for something the candidate hasn't done, connect it to the closest real experience from the candidate information. If there is no honest connection (an unrelated field such as news writing or video editing), leave that requirement out of the letter entirely
+13. COMPANY LOCATION: use only the company location, business and mission stated in the job description. NEVER guess, recall or invent a headquarters, city or address. If the job description gives no address, set all address fields to null
 
 IMPORTANT: If no specific company name is identified (indicated by null, empty, or placeholder values like "[Company Name]"), write the letter without referring to a specific company. Instead, focus on the role and responsibilities without mentioning company names or using phrases like "your company" or "your organization".
 
@@ -107,8 +110,9 @@ Return ONLY valid JSON with the following structure (NO other text before or aft
 - Search the job description for company address information
 - Look for patterns like: "located in", "office in", "based in", street addresses, city names
 - Common address formats: "123 Main St", "Suite 100", "New York, NY 10001"
-- If no specific address is found, extract at least the city/location mentioned
-- If no location information is available, use null values for address fields
+- Only extract an address or city that is written in the job description itself. Copy it as written
+- If the job description says only something like "based in SoHo, New York", use that city (city_state_zip: "SoHo, New York") and leave the street fields null
+- If no location information is in the job description, use null values for all address fields. Never infer one from the company name
 
 ## Quality Guidelines:
 - **WORD LIMIT**: MAXIMUM 250 words total for all 3 paragraphs combined (approximately 80 words per paragraph)
